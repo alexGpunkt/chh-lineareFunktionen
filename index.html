@@ -1,1233 +1,1145 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📐 Lineare Funktionen · PRO</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>📐 Lineare Funktionen • mobil mit PDF</title>
+  <!-- jsPDF für PDF-Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        :root {
-            --bg: #0c0f1c;
-            --card: #1b2235;
-            --card-border: #2a3450;
-            --accent: #5abfff;
-            --accent-soft: rgba(90, 190, 255, 0.2);
-            --text: #eef3ff;
-            --text-dim: #a5b3d9;
-            --success: #6fcf97;
-            --success-soft: rgba(111, 207, 151, 0.1);
-            --error: #eb5757;
-            --error-soft: rgba(235, 87, 87, 0.1);
-            --warning: #f2c94c;
-            --warning-soft: rgba(242, 201, 76, 0.1);
-            --radius: 20px;
-            --radius-sm: 40px;
-            --transition: all 0.2s ease;
-        }
+    :root {
+      --bg: #0c0f1c;
+      --card-bg: rgba(25, 30, 45, 0.95);
+      --border: rgba(90, 190, 255, 0.2);
+      --accent: #5abfff;
+      --accent-glow: rgba(90, 190, 255, 0.3);
+      --text: #f0f4ff;
+      --text-dim: #a5b3d9;
+      --success: #6fcf97;
+      --error: #eb5757;
+      --radius: 24px;
+      --radius-sm: 16px;
+    }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.5;
-            padding: 1.5rem;
-            min-height: 100vh;
-        }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      margin: 0;
+    }
 
-        .app {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #111726;
-            border-radius: var(--radius);
-            padding: 2rem;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
+    /* Hauptcontainer – vollflächig für mobile */
+    .app {
+      width: 100%;
+      min-height: 100vh;
+      background: rgba(15, 20, 30, 0.9);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+    }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
+    /* Mobile Navigation – als Scroll-Leiste unten */
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 15, 25, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0.25rem;
+      z-index: 100;
+      box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+    }
 
-        .header h2 {
-            font-weight: 500;
-            letter-spacing: -0.01em;
-        }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      padding: 0.4rem 0.1rem;
+      border-radius: 12px;
+      transition: all 0.2s;
+      gap: 0.2rem;
+    }
 
-        .qr-btn {
-            background: transparent;
-            border: 1px solid var(--accent);
-            padding: 0.5rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
+    .nav-item span {
+      font-size: 1.3rem;
+    }
 
-        .qr-btn:hover {
-            background: var(--accent-soft);
-            transform: translateY(-1px);
-        }
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(90, 190, 255, 0.15);
+    }
 
-        /* Navigation */
-        .topbar {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
+    /* PDF-Button etwas hervorheben */
+    #pdfExportBtn {
+      color: #ffd966;
+    }
+    #pdfExportBtn.active {
+      color: #ffd966;
+      background: rgba(255, 217, 102, 0.15);
+    }
 
-        .nav-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-dim);
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
+    /* Level-Auswahl */
+    .level-select {
+      margin: 0 0 1rem 0;
+      padding: 0.5rem;
+      background: var(--card-bg);
+      border-radius: 40px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+    }
 
-        .nav-btn:hover {
-            border-color: var(--accent);
-            color: white;
-        }
+    /* Hauptinhalt – mit Padding unten für Navigation */
+    .main-content {
+      flex: 1;
+      padding: 1rem 1rem 5rem 1rem;
+      overflow-y: auto;
+    }
 
-        .nav-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-            color: white;
-            font-weight: 500;
-        }
+    /* Hauptbereich – vertikale Anordnung für mobile */
+    .main-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-        /* Hauptbereich */
-        .main {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 2rem;
-        }
+    /* Graph-Bereich */
+    .graph-area {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
 
-        @media (max-width: 1000px) {
-            .main {
-                grid-template-columns: 1fr;
-            }
-        }
+    .graph-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
 
-        .card {
-            background: var(--card);
-            padding: 1.8rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
+    .graph-title span {
+      background: rgba(90, 190, 255, 0.15);
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      border: 1px solid var(--border);
+    }
 
-        /* SVG Container */
-        .svg-container {
-            background: #0f1423;
-            border-radius: 16px;
-            padding: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
+    .svg-container {
+      background: #0b0f1a;
+      border-radius: var(--radius-sm);
+      padding: 0.3rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
 
-        svg {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 12px;
-        }
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
 
-        /* Multi-Graph Layout */
-        .graph-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
+    /* Funktionsinfos */
+    .func-info {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
 
-        .graph-option {
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid transparent;
-            border-radius: 16px;
-            padding: 0.5rem;
-        }
+    .chip {
+      background: rgba(90, 190, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
 
-        .graph-option:hover {
-            background: rgba(90, 190, 255, 0.1);
-        }
+    .chip i {
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-right: 0.3rem;
+    }
 
-        .graph-option.selected {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-        }
+    /* Rechte Seite – untereinander */
+    .exercise-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-        .graph-option.correct {
-            border-color: var(--success);
-            background: var(--success-soft);
-        }
+    .book-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1rem;
+      border: 1px solid var(--border);
+    }
 
-        .graph-option.wrong {
-            border-color: var(--error);
-            background: var(--error-soft);
-        }
+    .book-card h3 {
+      color: var(--accent);
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
 
-        /* Erklärungen */
-        .explanation {
-            margin-top: 1.2rem;
-            font-size: 0.95rem;
-            color: var(--text-dim);
-        }
+    .book-image {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      background: #05070c;
+      padding: 0.3rem;
+    }
 
-        .explanation b {
-            color: var(--text);
-            font-weight: 600;
-        }
+    .book-image svg {
+      width: 100%;
+      height: auto;
+    }
 
-        .steps {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #cfd9ff;
-            list-style: none;
-            counter-reset: step-counter;
-        }
+    .exercise-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1rem;
+      border: 1px solid var(--border);
+    }
 
-        .steps li {
-            margin-bottom: 0.5rem;
-            counter-increment: step-counter;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    .exercise-title {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      font-size: 1rem;
+    }
 
-        .steps li::before {
-            content: counter(step-counter) "️⃣";
-            opacity: 0.8;
-            font-size: 0.9rem;
-        }
+    /* Mobile-optimierte Eingabefelder */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
 
-        .chip {
-            display: inline-block;
-            background: var(--accent-soft);
-            padding: 0.3rem 0.8rem;
-            border-radius: var(--radius-sm);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            border: 1px solid var(--accent);
-        }
+    .step-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.8rem;
+      border-radius: 16px;
+      border-left: 3px solid var(--accent);
+    }
 
-        .equation {
-            font-size: 1.3rem;
-            text-align: center;
-            padding: 1rem;
-            background: #0f1423;
-            border-radius: var(--radius);
-            margin-bottom: 1rem;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-        }
+    .step-label {
+      font-weight: bold;
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
 
-        /* Formularelemente */
-        .input-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
+    .step-row input {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 0.8rem 1rem;
+      color: white;
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+    }
 
-        .step-group {
-            background: #0f1423;
-            padding: 1rem;
-            border-radius: var(--radius);
-            margin-bottom: 1rem;
-            border: 1px solid var(--card-border);
-        }
+    .step-row .step-hint {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      margin-top: 0.2rem;
+    }
 
-        .step-label {
-            color: var(--accent);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+    /* Tabelle für mobile */
+    .table-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.5rem;
+      border-radius: 30px;
+    }
 
-        input {
-            background: #0f1423;
-            border: 1px solid var(--card-border);
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            width: 130px;
-        }
+    .table-label {
+      min-width: 50px;
+      font-weight: bold;
+    }
 
-        input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-soft);
-        }
+    .table-row input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 0.6rem 1rem;
+      color: white;
+      font-size: 0.95rem;
+    }
 
-        input::placeholder {
-            color: #4a5670;
-        }
+    /* Buttons – groß und gut klickbar */
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0 0.5rem;
+    }
 
-        .input-correct {
-            border-color: var(--success);
-            background: var(--success-soft);
-        }
+    .btn {
+      background: rgba(90, 190, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 0.8rem 1.2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
 
-        .input-wrong {
-            border-color: var(--error);
-            background: var(--error-soft);
-        }
+    .btn-primary {
+      background: rgba(90, 190, 255, 0.3);
+      border-color: var(--accent);
+    }
 
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin: 1.2rem 0 0.8rem;
-        }
+    .btn-primary:active {
+      background: rgba(90, 190, 255, 0.5);
+      transform: scale(0.98);
+    }
 
-        button {
-            background: var(--accent-soft);
-            border: 1px solid var(--accent);
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            flex: 0 1 auto;
-        }
+    .btn:active {
+      background: rgba(90, 190, 255, 0.25);
+      transform: scale(0.98);
+    }
 
-        button:hover {
-            background: rgba(90, 190, 255, 0.3);
-            transform: translateY(-1px);
-        }
+    /* Feedback-Bereich */
+    .feedback {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 30px;
+      padding: 0.8rem 1rem;
+      margin-top: 1rem;
+      border-left: 4px solid var(--accent);
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      word-break: break-word;
+    }
 
-        button:active {
-            transform: translateY(0);
-        }
+    .feedback.success {
+      border-left-color: var(--success);
+      color: #a5e0b5;
+    }
 
-        button.secondary {
-            border-color: var(--text-dim);
-            background: transparent;
-        }
+    .feedback.error {
+      border-left-color: var(--error);
+      color: #f5a3a3;
+    }
 
-        button.secondary:hover {
-            border-color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
+    /* Hide desktop navigation */
+    .desktop-nav {
+      display: none;
+    }
 
-        /* Feedback */
-        .feedback {
-            margin-top: 1.2rem;
-            padding: 0.8rem 1.2rem;
-            border-left: 4px solid var(--accent);
-            border-radius: 12px;
-            background: rgba(90, 190, 255, 0.05);
-            font-weight: 500;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .feedback.success {
-            border-left-color: var(--success);
-            background: var(--success-soft);
-            color: #d0f0da;
-        }
-
-        .feedback.error {
-            border-left-color: var(--error);
-            background: var(--error-soft);
-            color: #f5c2c2;
-        }
-
-        .feedback.warning {
-            border-left-color: var(--warning);
-            background: var(--warning-soft);
-            color: #f9e2b7;
-        }
-
-        /* Tabelle */
-        .table-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .table-label {
-            min-width: 40px;
-            color: var(--text-dim);
-            font-family: monospace;
-        }
-
-        /* QR Overlay */
-        .qr-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .qr-box {
-            background: var(--card);
-            padding: 2.5rem;
-            border-radius: var(--radius);
-            text-align: center;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .qr-box h3 {
-            margin-bottom: 1.5rem;
-            color: var(--accent);
-        }
-
-        .qr-box img {
-            margin: 1.5rem 0;
-            border-radius: 12px;
-            background: white;
-            padding: 0.5rem;
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
-
-        .mt-2 {
-            margin-top: 0.75rem;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .hint {
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            font-style: italic;
-            margin-top: 0.5rem;
-        }
-    </style>
+    /* Portrait-optimiert */
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 0.8rem 0.8rem 5rem 0.8rem;
+      }
+      
+      .btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+        min-width: 100px;
+      }
+      
+      .chip {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app">
-    <div class="header">
-        <h2>📐 Lineare Funktionen · PRO</h2>
-        <button class="qr-btn hidden" id="qrButton">📱 QR-Code</button>
-    </div>
+  <!-- Mobile Navigation (unten) mit PDF-Button -->
+  <div class="mobile-nav" id="mobileNav">
+    <button class="nav-item active" data-section="coords">
+      <span>📌</span>
+      <span>Punkte</span>
+    </button>
+    <button class="nav-item" data-section="table">
+      <span>📊</span>
+      <span>Tabelle</span>
+    </button>
+    <button class="nav-item" data-section="normalform">
+      <span>📈</span>
+      <span>m & b</span>
+    </button>
+    <button class="nav-item" data-section="parallel">
+      <span>⚡</span>
+      <span>Parallel</span>
+    </button>
+    <button class="nav-item" data-section="nullstellen">
+      <span>❌</span>
+      <span>Nullstellen</span>
+    </button>
+    <button class="nav-item" id="pdfExportBtn">
+      <span>📄</span>
+      <span>PDF</span>
+    </button>
+  </div>
 
-    <div class="topbar">
-        <button class="nav-btn active" data-section="coords">📌 Punkte</button>
-        <button class="nav-btn" data-section="table">📊 Tabelle</button>
-        <button class="nav-btn" data-section="normal">📈 m & b</button>
-        <button class="nav-btn" data-section="parallel">⚡ Parallel</button>
-        <button class="nav-btn" data-section="graph">📉 Graph wählen</button>
-        <button class="nav-btn" data-section="zero">🎯 Nullstellen</button>
+  <!-- Hauptinhalt (scrollbar) -->
+  <div class="main-content" id="mainContent">
+    <div class="main-panel" id="mainPanel">
+      <!-- Wird per JavaScript befüllt -->
     </div>
-
-    <div class="main">
-        <div class="card" id="graphCard"></div>
-        <div class="card" id="exerciseCard"></div>
-    </div>
-</div>
-
-<div id="qrOverlay" class="qr-overlay hidden">
-    <div class="qr-box">
-        <h3>📱 Auf Smartphone öffnen</h3>
-        <img id="qrImage" alt="QR-Code">
-        <div class="button-group" style="justify-content: center;">
-            <button onclick="closeQR()">Schließen</button>
-        </div>
-    </div>
+  </div>
 </div>
 
 <script>
-    (function() {
-        'use strict';
-
-        // ==================== KONSTANTEN & HILFSFUNKTIONEN ====================
-        const SVG_BOUNDS = { min: -6, max: 6 };
-        const EPSILON = 0.01;
-
-        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        
-        const randomSlope = () => {
-            let m;
-            do {
-                m = randomInt(-4, 4);
-            } while (Math.abs(m) < EPSILON);
-            return m;
-        };
-
-        const randomSlopeWithZero = () => {
-            return randomInt(-4, 4);
-        };
-
-        const parseInput = (val) => {
-            if (!val) return NaN;
-            const str = val.replace(/,/g, '.').trim();
-            
-            // Bruch parsing
-            if (str.includes('/')) {
-                const parts = str.split('/').map(Number);
-                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && Math.abs(parts[1]) > EPSILON) {
-                    return parts[0] / parts[1];
-                }
-            }
-            
-            const num = parseFloat(str);
-            return isNaN(num) ? NaN : num;
-        };
-
-        const formatNumber = (num) => {
-            if (Math.abs(num - Math.round(num)) < EPSILON) {
-                return Math.round(num).toString();
-            }
-            return num.toFixed(2).replace(/\.?0+$/, '');
-        };
-
-        // ==================== SVG RENDERING ====================
-        const clipLine = (m, b) => {
-            const { min: xMin, max: xMax } = SVG_BOUNDS;
-            const yMin = xMin, yMax = xMax;
-            const points = [];
-            
-            const addPoint = (x, y) => {
-                if (x >= xMin - EPSILON && x <= xMax + EPSILON && 
-                    y >= yMin - EPSILON && y <= yMax + EPSILON) {
-                    points.push({ x: Math.max(xMin, Math.min(xMax, x)), 
-                                 y: Math.max(yMin, Math.min(yMax, y)) });
-                }
-            };
-
-            addPoint(xMin, m * xMin + b);
-            addPoint(xMax, m * xMax + b);
-
-            if (Math.abs(m) > EPSILON) {
-                addPoint((yMin - b) / m, yMin);
-                addPoint((yMax - b) / m, yMax);
-            }
-
-            return points.slice(0, 2);
-        };
-
-        const renderSingleGraph = (m, b, options = {}) => {
-            const { triangle = false, highlight = null, color = '#5abfff' } = options;
-            const { min, max } = SVG_BOUNDS;
-            const range = max - min;
-            
-            let gridLines = '';
-            
-            for (let x = min; x <= max; x++) {
-                if (x === 0) continue;
-                gridLines += `<line x1="${x}" y1="${min}" x2="${x}" y2="${max}" stroke="#2a3450" stroke-width="0.05"/>`;
-            }
-            for (let y = min; y <= max; y++) {
-                if (y === 0) continue;
-                gridLines += `<line x1="${min}" y1="${y}" x2="${max}" y2="${y}" stroke="#2a3450" stroke-width="0.05"/>`;
-            }
-
-            const axes = `
-                <line x1="${min}" y1="0" x2="${max}" y2="0" stroke="#5abfff" stroke-width="0.12"/>
-                <line x1="0" y1="${min}" x2="0" y2="${max}" stroke="#5abfff" stroke-width="0.12"/>
-            `;
-
-            let functionLine = '';
-            if (m !== null && !isNaN(m) && !isNaN(b)) {
-                const segment = clipLine(m, b);
-                if (segment.length === 2) {
-                    functionLine = `<line x1="${segment[0].x}" y1="${segment[0].y}" 
-                                           x2="${segment[1].x}" y2="${segment[1].y}" 
-                                           stroke="${color}" stroke-width="0.2" stroke-linecap="round"/>`;
-                }
-            }
-
-            let triangleMark = '';
-            if (triangle && m !== null && !isNaN(m) && !isNaN(b) && Math.abs(m) < 10) {
-                const run = 1;
-                const rise = m;
-                const p1 = { x: 0, y: b };
-                const p2 = { x: run, y: b };
-                const p3 = { x: run, y: b + rise };
-                
-                if (Math.abs(p1.x) <= max && Math.abs(p1.y) <= max &&
-                    Math.abs(p2.x) <= max && Math.abs(p2.y) <= max &&
-                    Math.abs(p3.x) <= max && Math.abs(p3.y) <= max) {
-                    triangleMark = `
-                        <polygon points="${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}"
-                                 fill="rgba(90,190,255,0.2)" stroke="#5abfff" stroke-width="0.1" stroke-dasharray="0.2"/>
-                    `;
-                }
-            }
-
-            let highlightMark = '';
-            if (highlight) {
-                highlightMark = `<circle cx="${highlight.x}" cy="${highlight.y}" r="0.35" fill="#eb5757" stroke="white" stroke-width="0.1"/>`;
-            }
-
-            let labels = '';
-            for (let i = min; i <= max; i++) {
-                if (i === 0) continue;
-                labels += `<text x="${i - 0.2}" y="-0.2" fill="#6b7b9c" font-size="0.3">${i}</text>`;
-                labels += `<text x="-0.4" y="${i + 0.1}" fill="#6b7b9c" font-size="0.3">${-i}</text>`;
-            }
-
-            return `
-                <svg viewBox="${min} ${min} ${range} ${range}" xmlns="http://www.w3.org/2000/svg">
-                    ${gridLines}
-                    ${axes}
-                    ${labels}
-                    ${functionLine}
-                    ${triangleMark}
-                    ${highlightMark}
-                </svg>
-            `;
-        };
-
-        const renderGraphOptions = (functions, selectedIndex = -1, correctIndex = null) => {
-            const { min, max } = SVG_BOUNDS;
-            const range = max - min;
-            
-            return functions.map((f, idx) => {
-                const isSelected = idx === selectedIndex;
-                const isCorrect = correctIndex !== null && idx === correctIndex;
-                const isWrong = selectedIndex !== -1 && isSelected && correctIndex !== null && idx !== correctIndex;
-                
-                let containerClass = 'graph-option';
-                if (isSelected) containerClass += ' selected';
-                if (isCorrect) containerClass += ' correct';
-                if (isWrong) containerClass += ' wrong';
-                
-                let gridLines = '';
-                for (let x = min; x <= max; x++) {
-                    if (x === 0) continue;
-                    gridLines += `<line x1="${x}" y1="${min}" x2="${x}" y2="${max}" stroke="#2a3450" stroke-width="0.03"/>`;
-                }
-                for (let y = min; y <= max; y++) {
-                    if (y === 0) continue;
-                    gridLines += `<line x1="${min}" y1="${y}" x2="${max}" y2="${y}" stroke="#2a3450" stroke-width="0.03"/>`;
-                }
-
-                const axes = `
-                    <line x1="${min}" y1="0" x2="${max}" y2="0" stroke="#5abfff" stroke-width="0.08"/>
-                    <line x1="0" y1="${min}" x2="0" y2="${max}" stroke="#5abfff" stroke-width="0.08"/>
-                `;
-
-                const segment = clipLine(f.m, f.b);
-                let functionLine = '';
-                if (segment.length === 2) {
-                    functionLine = `<line x1="${segment[0].x}" y1="${segment[0].y}" 
-                                           x2="${segment[1].x}" y2="${segment[1].y}" 
-                                           stroke="#5abfff" stroke-width="0.15" stroke-linecap="round"/>`;
-                }
-
-                return `
-                    <div class="${containerClass}" data-graph-index="${idx}">
-                        <svg viewBox="${min} ${min} ${range} ${range}" xmlns="http://www.w3.org/2000/svg">
-                            ${gridLines}
-                            ${axes}
-                            ${functionLine}
-                        </svg>
-                    </div>
-                `;
-            }).join('');
-        };
-
-        // ==================== APP STATE ====================
-        let currentSection = 'coords';
-        let currentExample = {};
-        let feedbackElement = null;
-        let selectedGraphIndex = -1;
-        let showGraphSolution = false;
-
-        // ==================== BEISPIELE GENERIEREN ====================
-        const generateExample = () => {
-            selectedGraphIndex = -1;
-            showGraphSolution = false;
-            
-            switch (currentSection) {
-                case 'coords':
-                    currentExample = {
-                        target: {
-                            x: randomInt(-5, 5),
-                            y: randomInt(-5, 5)
-                        }
-                    };
-                    break;
-
-                case 'table':
-                    currentExample = {
-                        m: randomSlope(),
-                        b: randomInt(-4, 4),
-                        xs: [-2, -1, 0, 1, 2]
-                    };
-                    break;
-
-                case 'normal':
-                    currentExample = {
-                        m: randomSlope(),
-                        b: randomInt(-4, 4)
-                    };
-                    break;
-
-                case 'parallel':
-                    const m = randomSlope();
-                    const b = randomInt(-4, 4);
-                    const P = {
-                        x: randomInt(-3, 3),
-                        y: randomInt(-3, 3)
-                    };
-                    const mPerp = (Math.abs(m) < EPSILON) ? 1000 : -1 / m;
-                    
-                    currentExample = {
-                        m, b, P,
-                        mPerp,
-                        bPar: P.y - m * P.x,
-                        bPerp: P.y - mPerp * P.x
-                    };
-                    break;
-
-                case 'graph':
-                    // Funktion für die gesucht wird
-                    const targetM = randomSlopeWithZero();
-                    const targetB = randomInt(-4, 4);
-                    
-                    // 4 verschiedene Graphen generieren
-                    const options = [
-                        { m: targetM, b: targetB }, // Korrekte Lösung
-                        { m: targetM, b: randomInt(-4, 4) }, // Gleiche Steigung, anderer b
-                        { m: randomSlopeWithZero(), b: targetB }, // Andere Steigung, gleicher b
-                        { m: randomSlopeWithZero(), b: randomInt(-4, 4) } // Komplett anders
-                    ];
-                    
-                    // Sicherstellen, dass alle Optionen unterschiedlich sind
-                    const uniqueOptions = [];
-                    options.forEach(opt => {
-                        const exists = uniqueOptions.some(u => 
-                            Math.abs(u.m - opt.m) < EPSILON && Math.abs(u.b - opt.b) < EPSILON
-                        );
-                        if (!exists) uniqueOptions.push(opt);
-                    });
-                    
-                    // Falls nötig, auffüllen
-                    while (uniqueOptions.length < 4) {
-                        uniqueOptions.push({
-                            m: randomSlopeWithZero(),
-                            b: randomInt(-4, 4)
-                        });
-                    }
-                    
-                    currentExample = {
-                        targetM,
-                        targetB,
-                        options: uniqueOptions.slice(0, 4),
-                        correctIndex: 0 // Erste Option ist immer die korrekte
-                    };
-                    break;
-
-                case 'zero':
-                    const zeroM = randomSlope(); // Nicht null, damit es eine Nullstelle gibt
-                    const zeroB = randomInt(-4, 4);
-                    const zeroX = -zeroB / zeroM;
-                    
-                    currentExample = {
-                        m: zeroM,
-                        b: zeroB,
-                        zero: zeroX,
-                        steps: [
-                            { description: '0 = m·x + b', operation: 'Null setzen' },
-                            { description: `0 = ${formatNumber(zeroM)}·x + ${formatNumber(zeroB)}`, operation: 'Einsetzen' },
-                            { description: `${-zeroB} = ${formatNumber(zeroM)}·x`, operation: 'b auf beide Seiten' },
-                            { description: `x = ${formatNumber(zeroX)}`, operation: 'Durch m teilen' }
-                        ]
-                    };
-                    break;
-            }
-        };
-
-        // ==================== UI RENDERING ====================
-        const renderSection = () => {
-            const graphCard = document.getElementById('graphCard');
-            const exerciseCard = document.getElementById('exerciseCard');
-            
-            if (!graphCard || !exerciseCard) return;
-
-            let graphHTML = '';
-            let exerciseHTML = '';
-
-            switch (currentSection) {
-                case 'coords':
-                    graphHTML = renderSingleGraph(null, null, { highlight: currentExample.target });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📌 Punkt im Koordinatensystem</b>
-                            <p>Koordinaten: (x | y) — zuerst x, dann y.</p>
-                            <ul class="steps">
-                                <li>Vom Ursprung starten</li>
-                                <li>Nach rechts/links (x)</li>
-                                <li>Nach oben/unten (y)</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="equation">Punkt gesucht</div>
-                        <div class="input-group">
-                            <input id="coordsInput" placeholder="x, y" autocomplete="off">
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkCoords()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'table':
-                    graphHTML = renderSingleGraph(currentExample.m, currentExample.b);
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📊 Wertetabelle</b>
-                            <p>Formel: <span class="chip">y = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}</span></p>
-                            <ul class="steps">
-                                <li>x einsetzen</li>
-                                <li>m·x berechnen</li>
-                                <li>b addieren</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = '<div style="margin-bottom: 1rem;">';
-                    currentExample.xs.forEach((x, i) => {
-                        exerciseHTML += `
-                            <div class="table-row">
-                                <span class="table-label">x = ${x}</span>
-                                <input id="t${i}" placeholder="y" autocomplete="off">
-                            </div>
-                        `;
-                    });
-                    exerciseHTML += `</div>
-                        <div class="button-group">
-                            <button onclick="checkTable()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'normal':
-                    graphHTML = renderSingleGraph(currentExample.m, currentExample.b, { triangle: true });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📈 Steigung & Achsenabschnitt</b>
-                            <p><span class="chip">b</span> = Schnittpunkt mit y-Achse</p>
-                            <p><span class="chip">m</span> = Anstieg (Δy / Δx)</p>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="equation">y = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}</div>
-                        <div class="input-group">
-                            <input id="mInput" placeholder="m" autocomplete="off">
-                            <input id="bInput" placeholder="b" autocomplete="off">
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkNormal()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'parallel':
-                    graphHTML = renderSingleGraph(currentExample.m, currentExample.b, { highlight: currentExample.P });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>⚡ Parallele & Senkrechte</b>
-                            <p>Parallel: gleiche Steigung m</p>
-                            <p>Senkrecht: m₁ · m₂ = -1</p>
-                            <p>Punkt P (rot) liegt auf beiden Geraden</p>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="equation">y = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}</div>
-                        <div class="equation" style="font-size:1rem;">P (${currentExample.P.x} | ${currentExample.P.y})</div>
-                        <div style="margin-bottom: 1rem;">
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Parallel m:</span>
-                                <input id="pm" placeholder="m" autocomplete="off">
-                            </div>
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Parallel b:</span>
-                                <input id="pb" placeholder="b" autocomplete="off">
-                            </div>
-                            <div class="input-group mt-2">
-                                <span style="min-width: 80px;">Senkrecht m:</span>
-                                <input id="sm" placeholder="m" autocomplete="off">
-                            </div>
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Senkrecht b:</span>
-                                <input id="sb" placeholder="b" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkParallel()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'graph':
-                    graphHTML = `
-                        <div class="svg-container">
-                            <div class="graph-grid">
-                                ${renderGraphOptions(currentExample.options, selectedGraphIndex, showGraphSolution ? currentExample.correctIndex : null)}
-                            </div>
-                        </div>
-                        <div class="explanation">
-                            <b>📉 Welcher Graph passt?</b>
-                            <p>Gesucht ist die Funktion:</p>
-                            <div class="equation">y = ${formatNumber(currentExample.targetM)}·x + ${formatNumber(currentExample.targetB)}</div>
-                            <ul class="steps">
-                                <li>y-Achsenabschnitt b suchen</li>
-                                <li>Steigung m prüfen</li>
-                                <li>Passenden Graphen wählen</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="button-group">
-                            <button onclick="checkGraphSelection()" ${selectedGraphIndex === -1 ? 'disabled style="opacity:0.5;"' : ''}>✓ Auswahl prüfen</button>
-                            <button class="secondary" onclick="showGraphSolution = false; newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                        <p class="hint">Klicke auf einen Graphen, um ihn auszuwählen.</p>
-                    `;
-                    break;
-
-                case 'zero':
-                    const steps = currentExample.steps || [];
-                    
-                    graphHTML = renderSingleGraph(currentExample.m, currentExample.b, { 
-                        highlight: { x: currentExample.zero, y: 0 }
-                    });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>🎯 Nullstellen berechnen</b>
-                            <p>Eine Nullstelle ist der x-Wert, bei dem y = 0 ist.</p>
-                            <ul class="steps">
-                                <li>Funktion gleich Null setzen</li>
-                                <li>Nach x auflösen</li>
-                                <li>Ergebnis ist die Nullstelle</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="equation">y = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}</div>
-                        <div class="step-group">
-                            <div class="step-label">Schritt 1: Gleichung aufstellen</div>
-                            <input id="step1" placeholder="0 = ..." autocomplete="off" value="0 = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}">
-                        </div>
-                        <div class="step-group">
-                            <div class="step-label">Schritt 2: Nach x auflösen</div>
-                            <input id="step2" placeholder="x = ..." autocomplete="off">
-                        </div>
-                        <div class="hint">Tipp: Bringe zuerst b auf die andere Seite, dann teile durch m.</div>
-                        <div class="button-group">
-                            <button onclick="checkZeroSteps()">✓ Schritte prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                            <button class="secondary" onclick="showZeroSolution()">🔍 Lösung anzeigen</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-            }
-
-            graphCard.innerHTML = graphHTML;
-            exerciseCard.innerHTML = exerciseHTML;
-            feedbackElement = document.getElementById('feedback');
-
-            // Event-Listener für Graph-Auswahl
-            if (currentSection === 'graph') {
-                document.querySelectorAll('.graph-option').forEach(opt => {
-                    opt.addEventListener('click', (e) => {
-                        if (showGraphSolution) return; // Keine Auswahl mehr nach Lösung
-                        const idx = parseInt(opt.dataset.graphIndex);
-                        selectGraph(idx);
-                    });
-                });
-            }
-        };
-
-        // ==================== PRÜFFUNKTIONEN ====================
-        window.selectGraph = (index) => {
-            selectedGraphIndex = index;
-            renderSection();
-        };
-
-        window.checkCoords = () => {
-            const input = document.getElementById('coordsInput');
-            if (!input || !feedbackElement) return;
-            
-            const parts = input.value.split(',').map(Number);
-            const isValid = parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]);
-            
-            if (isValid && parts[0] === currentExample.target.x && parts[1] === currentExample.target.y) {
-                feedbackElement.textContent = '✅ Richtig! Gut gemacht!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = `❌ Gesucht war (${currentExample.target.x} | ${currentExample.target.y})`;
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.checkTable = () => {
-            if (!feedbackElement || !currentExample.xs) return;
-            
-            let allCorrect = true;
-            currentExample.xs.forEach((x, i) => {
-                const input = document.getElementById(`t${i}`);
-                if (input) {
-                    const val = parseInput(input.value);
-                    const expected = currentExample.m * x + currentExample.b;
-                    if (isNaN(val) || Math.abs(val - expected) > EPSILON) {
-                        allCorrect = false;
-                    }
-                }
-            });
-
-            feedbackElement.textContent = allCorrect ? '✅ Alles richtig!' : '❌ Mindestens ein Wert ist falsch';
-            feedbackElement.className = allCorrect ? 'feedback success' : 'feedback error';
-        };
-
-        window.checkNormal = () => {
-            const mInput = document.getElementById('mInput');
-            const bInput = document.getElementById('bInput');
-            if (!mInput || !bInput || !feedbackElement) return;
-
-            const m = parseInput(mInput.value);
-            const b = parseInput(bInput.value);
-
-            if (!isNaN(m) && !isNaN(b) && 
-                Math.abs(m - currentExample.m) < EPSILON && 
-                Math.abs(b - currentExample.b) < EPSILON) {
-                feedbackElement.textContent = '✅ Korrekt!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = `❌ Richtig wäre m = ${currentExample.m}, b = ${currentExample.b}`;
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.checkParallel = () => {
-            const pm = parseInput(document.getElementById('pm')?.value);
-            const pb = parseInput(document.getElementById('pb')?.value);
-            const sm = parseInput(document.getElementById('sm')?.value);
-            const sb = parseInput(document.getElementById('sb')?.value);
-            
-            if (!feedbackElement) return;
-
-            const parallelOK = !isNaN(pm) && !isNaN(pb) && 
-                               Math.abs(pm - currentExample.m) < EPSILON && 
-                               Math.abs(pb - currentExample.bPar) < EPSILON;
-            
-            const perpOK = !isNaN(sm) && !isNaN(sb) && 
-                           (Math.abs(currentExample.m) < EPSILON ? Math.abs(sm) > 100 : Math.abs(sm - currentExample.mPerp) < EPSILON) &&
-                           Math.abs(sb - currentExample.bPerp) < EPSILON;
-
-            if (parallelOK && perpOK) {
-                feedbackElement.textContent = '✅ Alles richtig!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = '❌ Nicht korrekt. Überprüfe beide Geraden.';
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.checkGraphSelection = () => {
-            if (!feedbackElement) return;
-            
-            if (selectedGraphIndex === -1) {
-                feedbackElement.textContent = '⚠️ Bitte wähle zuerst einen Graphen aus!';
-                feedbackElement.className = 'feedback warning';
-                return;
-            }
-
-            showGraphSolution = true;
-            
-            if (selectedGraphIndex === currentExample.correctIndex) {
-                feedbackElement.textContent = '✅ Richtig! Das ist der passende Graph.';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = `❌ Leider falsch. Der richtige Graph ist Nummer ${currentExample.correctIndex + 1}.`;
-                feedbackElement.className = 'feedback error';
-            }
-            
-            renderSection();
-        };
-
-        window.checkZeroSteps = () => {
-            const step1 = document.getElementById('step1')?.value.trim();
-            const step2 = parseInput(document.getElementById('step2')?.value);
-            
-            if (!feedbackElement) return;
-
-            // Schritt 1 prüfen (0 = m·x + b)
-            const expectedStep1 = `0 = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}`;
-            const step1Clean = step1?.replace(/\s+/g, '') || '';
-            const expectedClean = expectedStep1.replace(/\s+/g, '');
-            
-            const step1OK = step1Clean === expectedClean;
-
-            // Schritt 2 prüfen (Nullstelle)
-            const step2OK = !isNaN(step2) && Math.abs(step2 - currentExample.zero) < EPSILON;
-
-            // Inputs visuell feedback geben
-            const step1Input = document.getElementById('step1');
-            const step2Input = document.getElementById('step2');
-            
-            if (step1Input) {
-                step1Input.classList.toggle('input-correct', step1OK);
-                step1Input.classList.toggle('input-wrong', !step1OK && step1);
-            }
-            
-            if (step2Input) {
-                step2Input.classList.toggle('input-correct', step2OK);
-                step2Input.classList.toggle('input-wrong', !step2OK && step2);
-            }
-
-            if (step1OK && step2OK) {
-                feedbackElement.textContent = '✅ Perfekt! Beide Schritte sind richtig.';
-                feedbackElement.className = 'feedback success';
-            } else if (step1OK) {
-                feedbackElement.textContent = '⚠️ Schritt 1 ist richtig, aber die Nullstelle stimmt noch nicht.';
-                feedbackElement.className = 'feedback warning';
-            } else {
-                feedbackElement.textContent = '❌ Schritt 1 ist noch nicht korrekt. Setze die Funktion gleich Null.';
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.showZeroSolution = () => {
-            const step1Input = document.getElementById('step1');
-            const step2Input = document.getElementById('step2');
-            
-            if (step1Input) {
-                step1Input.value = `0 = ${formatNumber(currentExample.m)}·x + ${formatNumber(currentExample.b)}`;
-            }
-            if (step2Input) {
-                step2Input.value = formatNumber(currentExample.zero);
-            }
-            
-            if (feedbackElement) {
-                feedbackElement.textContent = '🔍 Lösung wurde eingefügt. Vergleiche mit deiner Rechnung.';
-                feedbackElement.className = 'feedback warning';
-            }
-        };
-
-        // ==================== NAVIGATION ====================
-        window.newExample = () => {
-            generateExample();
-            renderSection();
-        };
-
-        // ==================== QR CODE ====================
-        window.openQR = () => {
-            const overlay = document.getElementById('qrOverlay');
-            const qrImg = document.getElementById('qrImage');
-            if (overlay && qrImg) {
-                overlay.classList.remove('hidden');
-                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(window.location.href)}`;
-            }
-        };
-
-        window.closeQR = () => {
-            document.getElementById('qrOverlay')?.classList.add('hidden');
-        };
-
-        // ==================== INITIALISIERUNG ====================
-        const init = () => {
-            // Navigation
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentSection = btn.dataset.section;
-                    generateExample();
-                    renderSection();
-                });
-            });
-
-            // QR Button (nur auf GitHub Pages)
-            const qrBtn = document.getElementById('qrButton');
-            if (window.location.hostname.includes('github.io') || window.location.hostname.includes('localhost')) {
-                qrBtn?.classList.remove('hidden');
-                qrBtn?.addEventListener('click', openQR);
-            }
-
-            // Overlay schließen mit Escape
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    closeQR();
-                }
-            });
-
-            // Initialen State laden
-            generateExample();
-            renderSection();
-        };
-
-        // Start
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
+  (function() {
+    // =====================================================
+    // GLOBAL STATE (erweitert)
+    // =====================================================
+    let currentSection = 'coords';
+    let currentExample = null;
+    let currentLevel = 'standard'; // Neu: für Differenzierung
+
+    // =====================================================
+    // HILFSFUNKTIONEN (original + erweitert)
+    // =====================================================
+    
+    // Original rand-Funktion (beibehalten)
+    const randOriginal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    
+    // Erweiterte rand-Funktion mit Level-Unterstützung
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Level-abhängigen Bereich holen
+    function getRange() {
+      if (currentLevel === 'basic') return 4;
+      if (currentLevel === 'advanced') return 10;
+      return 6; // standard
+    }
+
+    // Erweiterte randomSlope mit Level-Differenzierung
+    function randomSlope() {
+      let m;
+      const range = getRange();
+      do {
+        if (currentLevel === 'advanced') {
+          const num = rand(-5, 5);
+          const den = rand(1, 4);
+          m = num / den;
         } else {
-            init();
+          m = rand(-range, range);
         }
-    })();
+      } while (Math.abs(m) < 0.001);
+      return m;
+    }
+
+    // Verbesserte asFraction mit Brucherkennung (originale Version)
+    function asFraction(m) {
+      if (Number.isInteger(m)) return m.toString();
+      const eps = 0.001;
+      for (let den = 1; den <= 8; den++) {
+        for (let num = -8; num <= 8; num++) {
+          if (Math.abs(m - num / den) < eps) return `${num}/${den}`;
+        }
+      }
+      return m.toFixed(2);
+    }
+
+    function computeNullstelle(m, b) {
+      if (Math.abs(m) < 0.0001) return null;
+      return -b / m;
+    }
+
+    // =====================================================
+    // EXAMPLE GENERATION (erweitert mit Level)
+    // =====================================================
+    function generateExample(section) {
+      const range = getRange();
+
+      if (section === 'coords') {
+        return {
+          target: {
+            x: rand(-range, range),
+            y: rand(-range, range)
+          }
+        };
+      }
+
+      if (section === 'table') {
+        const m = randomSlope();
+        const b = rand(-range, range);
+        const xs = [-2, -1, 0, 1, 2];
+        const ys = xs.map(x => m * x + b);
+        return { m, b, xs, ys };
+      }
+
+      if (section === 'normalform') {
+        const m = randomSlope();
+        const b = rand(-range, range);
+        return { m, b };
+      }
+
+      if (section === 'parallel') {
+        const m = randomSlope();
+        const b = rand(-range, range);
+        const P = { x: rand(-3, 3), y: rand(-3, 3) };
+        const mPerp = -1 / m;
+        const bPar = P.y - m * P.x;
+        const bPerp = P.y - mPerp * P.x;
+        return { m, b, P, mPerp, bPar, bPerp };
+      }
+
+      if (section === 'nullstellen') {
+        const m = randomSlope();
+        const b = rand(-range, range);
+        const n = computeNullstelle(m, b);
+        return { m, b, nullstelle: n };
+      }
+    }
+
+    // =====================================================
+    // SHUFFLE Funktion für PDF
+    // =====================================================
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // =====================================================
+    // PDF EXPORT (erweiterte Version mit Niveau und Shuffle)
+    // =====================================================
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text("Arbeitsblatt – Lineare Funktionen", 20, 15);
+
+      doc.setFontSize(11);
+      
+      // Niveau anzeigen
+      let levelText = "Standard";
+      if (currentLevel === 'basic') levelText = "Basis";
+      if (currentLevel === 'advanced') levelText = "Erweitert";
+      doc.text("Niveau: " + levelText, 20, 22);
+      doc.text("Datum: ____________________", 140, 22);
+
+      let y = 35;
+      const sections = shuffle(['coords', 'table', 'normalform', 'parallel', 'nullstellen']);
+      const solutions = [];
+
+      sections.forEach((sec, i) => {
+        const ex = generateExample(sec);
+
+        doc.setFontSize(12);
+        doc.text("Aufgabe " + (i + 1) + ":", 20, y);
+        y += 8;
+
+        if (sec === 'coords') {
+          doc.text("Bestimme die Koordinaten des Punktes.", 25, y);
+          solutions.push(`(${ex.target.x}|${ex.target.y})`);
+        }
+
+        if (sec === 'table') {
+          doc.text(`Vervollständige die Tabelle zu y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, 25, y);
+          solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
+        }
+
+        if (sec === 'normalform') {
+          doc.text("Bestimme m und b aus dem Graphen.", 25, y);
+          solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
+        }
+
+        if (sec === 'parallel') {
+          doc.text(`Parallel & Senkrecht durch P(${ex.P.x}|${ex.P.y})`, 25, y);
+          solutions.push(`Parallel: y = ${asFraction(ex.m)}x ${ex.bPar >= 0 ? '+' : '-'} ${Math.abs(ex.bPar)}`);
+        }
+
+        if (sec === 'nullstellen') {
+          doc.text(`Bestimme die Nullstelle von y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, 25, y);
+          solutions.push(`x = ${asFraction(ex.nullstelle)}`);
+        }
+
+        y += 20;
+        if (y > 260) {
+          doc.addPage();
+          y = 30;
+        }
+      });
+
+      doc.addPage();
+      doc.text("Lösungen", 20, 20);
+      y = 30;
+
+      solutions.forEach((s, i) => {
+        doc.text((i + 1) + ". " + s, 20, y);
+        y += 10;
+      });
+
+      doc.save("Arbeitsblatt_Lineare_Funktionen.pdf");
+    }
+
+    // =====================================================
+    // NULLSTELLEN – mathematische Prüfung (neu)
+    // =====================================================
+    function checkNullstelleInput(inputValue, m, b) {
+      const val = parseFloat(inputValue.replace(',', '.'));
+      if (isNaN(val)) return false;
+      return Math.abs(m * val + b) < 0.01;
+    }
+
+    // =====================================================
+    // KOORDINATENSYSTEM SVG (original)
+    // =====================================================
+    function renderSVG(m, b, points = [], highlightPoint = null, drawTriangle = false, P = null, nullstelle = null) {
+      const xMin = -6, xMax = 6, yMin = -6, yMax = 6;
+      const viewBox = `${xMin} ${-yMax} ${xMax - xMin} ${yMax - yMin}`;
+
+      let grid = '';
+      for (let x = xMin; x <= xMax; x++) {
+        grid += `<line x1="${x}" y1="${-yMin}" x2="${x}" y2="${-yMax}" stroke="#2A3450" stroke-width="0.05" />`;
+      }
+      for (let y = yMin; y <= yMax; y++) {
+        grid += `<line x1="${xMin}" y1="${-y}" x2="${xMax}" y2="${-y}" stroke="#2A3450" stroke-width="0.05" />`;
+      }
+      grid += `<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5ABFFF" stroke-width="0.1" />`;
+      grid += `<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5ABFFF" stroke-width="0.1" />`;
+
+      let pointsSvg = '';
+      if (points && points.length) {
+        points.forEach(p => {
+          pointsSvg += `<circle cx="${p.x}" cy="${-p.y}" r="0.25" fill="#FFB347" />`;
+        });
+      }
+
+      const y1 = m * xMin + b;
+      const y2 = m * xMax + b;
+      const line = `<line x1="${xMin}" y1="${-y1}" x2="${xMax}" y2="${-y2}" stroke="#5ABFFF" stroke-width="0.15" />`;
+
+      let highlight = '';
+      if (highlightPoint) {
+        highlight += `<circle cx="${highlightPoint.x}" cy="${-highlightPoint.y}" r="0.3" fill="#EB5757" />`;
+      }
+      if (P) {
+        highlight += `<circle cx="${P.x}" cy="${-P.y}" r="0.3" fill="#EB5757" />`;
+      }
+      if (nullstelle !== null) {
+        const x0 = nullstelle;
+        const y0 = 0;
+        if (x0 >= xMin && x0 <= xMax) {
+          highlight += `<circle cx="${x0}" cy="${-y0}" r="0.35" fill="#EB5757" />`;
+          highlight += `<text x="${x0 + 0.3}" y="${-0.3}" fill="#EB5757" font-size="0.5">N</text>`;
+        }
+      }
+
+      let triangle = '';
+      if (drawTriangle && m !== 0) {
+        const run = 1;
+        const rise = m * run;
+        const startX = 0, startY = b;
+        const endX = startX + run, endY = startY + rise;
+        triangle = `
+          <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+          <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+          <text x="${(startX + endX) / 2}" y="${-startY + 0.4}" fill="#A5B3D9" font-size="0.4">1</text>
+          <text x="${endX + 0.3}" y="${-(startY + rise / 2)}" fill="#A5B3D9" font-size="0.4">${asFraction(m)}</text>
+        `;
+      }
+
+      return `
+        <svg viewBox="${viewBox}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          ${grid}
+          ${line}
+          ${triangle}
+          ${pointsSvg}
+          ${highlight}
+        </svg>
+      `;
+    }
+
+    // =====================================================
+    // BUCH-SVG (original)
+    // =====================================================
+    function bookSVG(type) {
+      if (type === 'coords') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><circle cx="30" cy="30" r="3" fill="#FFB347"/><circle cx="70" cy="20" r="3" fill="#FFB347"/><line x1="10" y1="30" x2="90" y2="30" stroke="#5ABFFF" stroke-width="1.5"/><line x1="50" y1="10" x2="50" y2="50" stroke="#5ABFFF" stroke-width="1.5"/></svg>`;
+      } else if (type === 'table') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="5" y1="20" x2="95" y2="20" stroke="#5ABFFF"/><line x1="35" y1="5" x2="35" y2="55" stroke="#5ABFFF"/><line x1="65" y1="5" x2="65" y2="55" stroke="#5ABFFF"/><text x="20" y="40" fill="white" font-size="6">x</text><text x="50" y="40" fill="white" font-size="6">y</text><text x="80" y="40" fill="white" font-size="6">y=mx+b</text></svg>`;
+      } else if (type === 'normal') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="45" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><circle cx="20" cy="40" r="2.5" fill="#FFB347"/><circle cx="45" cy="27.5" r="2.5" fill="#FFB347"/><text x="20" y="15" fill="white" font-size="5">m = rise/run</text></svg>`;
+      } else if (type === 'parallel') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="40" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><line x1="10" y1="45" x2="90" y2="15" stroke="#EB5757" stroke-width="2"/><circle cx="50" cy="27" r="3" fill="#EB5757"/></svg>`;
+      } else {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="15" y1="45" x2="85" y2="15" stroke="#5ABFFF" stroke-width="2"/><circle cx="50" cy="30" r="3" fill="#EB5757"/><text x="45" y="20" fill="white" font-size="5">N</text><text x="20" y="20" fill="white" font-size="4">f(x)=0</text></svg>`;
+      }
+    }
+
+    // =====================================================
+    // LEVEL SELECT ERSTELLEN
+    // =====================================================
+    function createLevelSelect() {
+      const levelSelect = document.createElement("select");
+      levelSelect.className = "level-select";
+      levelSelect.innerHTML = `
+        <option value="basic">🟢 Basis (Zahlen -4 bis 4)</option>
+        <option value="standard" selected>🟡 Standard (Zahlen -6 bis 6)</option>
+        <option value="advanced">🔴 Erweitert (mit Brüchen)</option>
+      `;
+
+      const mainContent = document.querySelector(".main-content");
+      mainContent.prepend(levelSelect);
+
+      levelSelect.addEventListener("change", (e) => {
+        currentLevel = e.target.value;
+        currentExample = generateExample(currentSection);
+        render();
+      });
+
+      return levelSelect;
+    }
+
+    // =====================================================
+    // RENDER (original, aber mit currentLevel)
+    // =====================================================
+    function render() {
+      const panel = document.getElementById('mainPanel');
+      const section = currentSection;
+      const ex = currentExample;
+
+      let graphTitle = '';
+      let graphSVG = '';
+      let funcChips = '';
+
+      if (section === 'coords') {
+        graphTitle = '📍 Punkt finden';
+        graphSVG = renderSVG(0, 0, [], ex.target);
+        funcChips = `<div class="chip"><i>Gesucht:</i> (${ex.target.x} | ${ex.target.y})</div>`;
+      } else if (section === 'table') {
+        graphTitle = '📊 Wertetabelle → Graph';
+        graphSVG = renderSVG(ex.m, ex.b, ex.xs.map((x, i) => ({ x, y: ex.ys[i] })));
+        funcChips = `<div class="chip"><i>y =</i> ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}</div>`;
+      } else if (section === 'normalform') {
+        graphTitle = '📈 Steigung & Achsenabschnitt';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, true);
+        funcChips = `<div class="chip"><i>m =</i> ${asFraction(ex.m)}</div><div class="chip"><i>b =</i> ${ex.b}</div>`;
+      } else if (section === 'parallel') {
+        graphTitle = '⚡ Parallele & Senkrechte';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, false, ex.P);
+        funcChips = `<div class="chip"><i>m =</i> ${asFraction(ex.m)}</div><div class="chip"><i>P =</i> (${ex.P.x}|${ex.P.y})</div>`;
+      } else {
+        graphTitle = '❌ Nullstellen berechnen';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, false, null, ex.nullstelle);
+        funcChips = `<div class="chip"><i>f(x) =</i> ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}</div>`;
+      }
+
+      let bookType = section;
+      let exerciseHTML = '';
+
+      if (section === 'coords') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>🎯</span> Klick-Übung</div>
+            <div class="input-group">
+              <input type="text" id="coordsAnswer" placeholder="x, y (z.B. 2,-3)" style="padding:0.8rem;">
+            </div>
+            <div class="button-group">
+              <button class="btn" id="coordsCheckBtn">🖱️ Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="coordsFeedback">Gib die Koordinaten des roten Punkts ein.</div>
+          </div>
+        `;
+      } else if (section === 'table') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>📝</span> Tabelle</div>
+            <div class="input-group">
+              ${ex.xs.map((x, idx) => `
+                <div class="table-row">
+                  <span class="table-label">x=${x}</span>
+                  <input type="text" id="tableInput${idx}" placeholder="y">
+                </div>
+              `).join('')}
+            </div>
+            <div class="button-group">
+              <button class="btn" id="tableCheckBtn">✅ Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="tableFeedback">Trage die y-Werte ein.</div>
+          </div>
+        `;
+      } else if (section === 'normalform') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>📐</span> m & b bestimmen</div>
+            <div class="input-group">
+              <input type="text" id="normalM" placeholder="Steigung m (z.B. 2 oder 3/4)">
+              <input type="text" id="normalB" placeholder="Achsenabschnitt b">
+            </div>
+            <div class="button-group">
+              <button class="btn" id="normalCheckBtn">🔍 Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="normalFeedback">Lies m und b aus dem Graphen ab.</div>
+          </div>
+        `;
+      } else if (section === 'parallel') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>⚡</span> Parallele Geraden Schritt für Schritt</div>
+            <div class="input-group">
+              <div class="step-row">
+                <span class="step-label">1️⃣ Steigung für Parallele</span>
+                <input type="text" id="parallelStep1" placeholder="m∥ = ? (gleiche Steigung)">
+                <span class="step-hint">Parallele haben gleiche Steigung m = ${asFraction(ex.m)}</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">2️⃣ b der Parallelen berechnen</span>
+                <input type="text" id="parallelStep2" placeholder="b∥ = y - m·x">
+                <span class="step-hint">Punkt P (${ex.P.x}|${ex.P.y}) einsetzen</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">3️⃣ Senkrechte: Steigung m⊥</span>
+                <input type="text" id="parallelStep3" placeholder="m⊥ = -1/m">
+                <span class="step-hint">m⊥ = -1 / ${asFraction(ex.m)}</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">4️⃣ b der Senkrechten berechnen</span>
+                <input type="text" id="parallelStep4" placeholder="b⊥ = y - m⊥·x">
+                <span class="step-hint">Punkt P (${ex.P.x}|${ex.P.y}) einsetzen</span>
+              </div>
+            </div>
+            <div class="button-group">
+              <button class="btn" id="parallelStepCheckBtn">🔍 Schritte prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="parallelStepFeedback">Fülle jeden Schritt nacheinander aus.</div>
+          </div>
+        `;
+      } else {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>❌</span> Nullstellen Schritt für Schritt</div>
+            <div class="input-group">
+              <div class="step-row">
+                <span class="step-label">1️⃣ f(x) = 0 setzen</span>
+                <input type="text" id="step1" placeholder="z.B. 0 oder f(x)=0">
+              </div>
+              <div class="step-row">
+                <span class="step-label">2️⃣ Funktion einsetzen</span>
+                <input type="text" id="step2" placeholder="mx + b = 0">
+              </div>
+              <div class="step-row">
+                <span class="step-label">3️⃣ b auf andere Seite</span>
+                <input type="text" id="step3" placeholder="mx = -b">
+              </div>
+              <div class="step-row">
+                <span class="step-label">4️⃣ Durch m dividieren</span>
+                <input type="text" id="step4" placeholder="x = -b/m">
+              </div>
+              <div class="step-row">
+                <span class="step-label">5️⃣ Nullstelle</span>
+                <input type="text" id="step5" placeholder="x = ...">
+              </div>
+            </div>
+            <div class="button-group">
+              <button class="btn" id="nullstellenCheckBtn">🔍 Schritte prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="nullstellenFeedback">Fülle jeden Schritt aus.</div>
+          </div>
+        `;
+      }
+
+      panel.innerHTML = `
+        <div class="graph-area">
+          <div class="graph-title">
+            <span>${graphTitle}</span>
+          </div>
+          <div class="svg-container">
+            ${graphSVG}
+          </div>
+          <div class="func-info">
+            ${funcChips}
+          </div>
+        </div>
+        <div class="exercise-area">
+          <div class="book-card">
+            <h3><span>📖</span> Buchvorlage</h3>
+            <div class="book-image">
+              ${bookSVG(bookType)}
+            </div>
+          </div>
+          ${exerciseHTML}
+        </div>
+      `;
+
+      // Mobile Navigation aktiv setzen
+      document.querySelectorAll('.nav-item:not(#pdfExportBtn)').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.section === currentSection) btn.classList.add('active');
+      });
+
+      // Event-Listener
+      document.querySelectorAll('#newExampleBtn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          currentExample = generateExample(currentSection);
+          render();
+        });
+      });
+
+      document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          currentSection = e.currentTarget.dataset.section;
+          currentExample = generateExample(currentSection);
+          render();
+        });
+      });
+
+      // Abschnitts-spezifische Prüfungen
+      if (section === 'coords') {
+        const checkBtn = document.getElementById('coordsCheckBtn');
+        const input = document.getElementById('coordsAnswer');
+        const feedback = document.getElementById('coordsFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const val = input.value.trim();
+            const parts = val.split(',').map(Number);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+              const [x, y] = parts;
+              if (x === ex.target.x && y === ex.target.y) {
+                feedback.textContent = '✅ Richtig! Punkt getroffen.';
+                feedback.className = 'feedback success';
+              } else {
+                feedback.textContent = `❌ Falsch. Gesucht: (${ex.target.x}|${ex.target.y})`;
+                feedback.className = 'feedback error';
+              }
+            } else {
+              feedback.textContent = '❌ Format: x,y (z.B. 2,-3)';
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'table') {
+        const checkBtn = document.getElementById('tableCheckBtn');
+        const feedback = document.getElementById('tableFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            let allCorrect = true;
+            for (let i = 0; i < ex.xs.length; i++) {
+              const inp = document.getElementById(`tableInput${i}`);
+              if (inp) {
+                const val = parseFloat(inp.value.replace(',', '.'));
+                if (isNaN(val) || Math.abs(val - ex.ys[i]) > 0.01) {
+                  allCorrect = false;
+                  inp.style.borderColor = '#EB5757';
+                } else {
+                  inp.style.borderColor = '#6FCF97';
+                }
+              }
+            }
+            if (allCorrect) {
+              feedback.textContent = '✅ Tabelle richtig!';
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = '❌ Nicht alle Werte stimmen.';
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'normalform') {
+        const checkBtn = document.getElementById('normalCheckBtn');
+        const mInp = document.getElementById('normalM');
+        const bInp = document.getElementById('normalB');
+        const feedback = document.getElementById('normalFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const mVal = parseFloat(mInp.value.replace(',', '.'));
+            const bVal = parseFloat(bInp.value.replace(',', '.'));
+            if (!isNaN(mVal) && !isNaN(bVal) && Math.abs(mVal - ex.m) < 0.01 && Math.abs(bVal - ex.b) < 0.01) {
+              feedback.textContent = `✅ Korrekt! m = ${asFraction(ex.m)}, b = ${ex.b}`;
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = `❌ Falsch. Tipp: m = ${asFraction(ex.m)}, b = ${ex.b}`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'parallel') {
+        const checkBtn = document.getElementById('parallelStepCheckBtn');
+        const feedback = document.getElementById('parallelStepFeedback');
+        const step1 = document.getElementById('parallelStep1');
+        const step2 = document.getElementById('parallelStep2');
+        const step3 = document.getElementById('parallelStep3');
+        const step4 = document.getElementById('parallelStep4');
+
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const expected1 = asFraction(ex.m);
+            const expected2 = asFraction(ex.bPar);
+            const expected3 = asFraction(ex.mPerp);
+            const expected4 = asFraction(ex.bPerp);
+
+            const val1 = step1.value.trim().replace(/\s+/g, '');
+            const val2 = step2.value.trim().replace(/\s+/g, '');
+            const val3 = step3.value.trim().replace(/\s+/g, '');
+            const val4 = step4.value.trim().replace(/\s+/g, '');
+
+            const step1OK = val1 === expected1 || val1 === ex.m.toString() || Math.abs(parseFloat(val1) - ex.m) < 0.01;
+            const step2OK = val2 === expected2 || val2 === ex.bPar.toString() || Math.abs(parseFloat(val2) - ex.bPar) < 0.01;
+            const step3OK = val3 === expected3 || val3 === ex.mPerp.toString() || Math.abs(parseFloat(val3) - ex.mPerp) < 0.01;
+            const step4OK = val4 === expected4 || val4 === ex.bPerp.toString() || Math.abs(parseFloat(val4) - ex.bPerp) < 0.01;
+
+            step1.style.borderColor = step1OK ? '#6FCF97' : '#EB5757';
+            step2.style.borderColor = step2OK ? '#6FCF97' : '#EB5757';
+            step3.style.borderColor = step3OK ? '#6FCF97' : '#EB5757';
+            step4.style.borderColor = step4OK ? '#6FCF97' : '#EB5757';
+
+            if (step1OK && step2OK && step3OK && step4OK) {
+              feedback.textContent = `✅ Alle Schritte korrekt!`;
+              feedback.className = 'feedback success';
+            } else {
+              const wrongSteps = [];
+              if (!step1OK) wrongSteps.push('1');
+              if (!step2OK) wrongSteps.push('2');
+              if (!step3OK) wrongSteps.push('3');
+              if (!step4OK) wrongSteps.push('4');
+              feedback.textContent = `❌ Schritt(e) ${wrongSteps.join(', ')} nicht korrekt.`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'nullstellen') {
+        const checkBtn = document.getElementById('nullstellenCheckBtn');
+        const feedback = document.getElementById('nullstellenFeedback');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        const step5 = document.getElementById('step5');
+
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const expected1 = '0';
+            const expected2 = `${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)} = 0`;
+            const expected3 = `${asFraction(ex.m)}x = ${-ex.b}`;
+            const expected4 = `x = ${asFraction(-ex.b)} / ${asFraction(ex.m)}`;
+            const expected5 = ex.nullstelle !== null ? `x = ${ex.nullstelle.toFixed(2)}` : 'keine Nullstelle';
+
+            const val1 = step1.value.trim();
+            const step1OK = val1 === '0' || val1 === 'f(x)=0' || val1 === 'f(x) = 0';
+            
+            const val2 = step2.value.trim().replace(/\s+/g, '');
+            const expected2clean = expected2.replace(/\s+/g, '');
+            const step2OK = val2 === expected2clean || (val2.includes(`${asFraction(ex.m)}x`) && val2.includes('=0'));
+            
+            const val3 = step3.value.trim().replace(/\s+/g, '');
+            const expected3clean = expected3.replace(/\s+/g, '');
+            const step3OK = val3 === expected3clean || (val3.includes(`${asFraction(ex.m)}x=`) && val3.includes(`${-ex.b}`));
+            
+            const val4 = step4.value.trim().replace(/\s+/g, '');
+            const expected4clean = expected4.replace(/\s+/g, '');
+            const step4OK = val4 === expected4clean || (val4.includes('x=') && val4.includes('/'));
+            
+            const val5 = step5.value.trim();
+            let step5OK = false;
+            if (ex.nullstelle !== null) {
+              step5OK = val5.includes(ex.nullstelle.toFixed(2)) || val5.includes(asFraction(ex.nullstelle));
+            } else {
+              step5OK = val5.toLowerCase().includes('keine') || val5.includes('unendlich');
+            }
+
+            step1.style.borderColor = step1OK ? '#6FCF97' : '#EB5757';
+            step2.style.borderColor = step2OK ? '#6FCF97' : '#EB5757';
+            step3.style.borderColor = step3OK ? '#6FCF97' : '#EB5757';
+            step4.style.borderColor = step4OK ? '#6FCF97' : '#EB5757';
+            step5.style.borderColor = step5OK ? '#6FCF97' : '#EB5757';
+
+            if (step1OK && step2OK && step3OK && step4OK && step5OK) {
+              feedback.textContent = `✅ Alle Schritte korrekt!`;
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = `❌ Einige Schritte nicht korrekt.`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+    }
+
+    // =====================================================
+    // INITIALISIERUNG
+    // =====================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Level-Auswahl erstellen
+      createLevelSelect();
+
+      // PDF-Button Event-Listener
+      const pdfBtn = document.getElementById('pdfExportBtn');
+      if (pdfBtn) {
+        pdfBtn.addEventListener('click', exportPDF);
+      }
+
+      // Initiales Beispiel generieren
+      currentExample = generateExample(currentSection);
+      
+      // Ersten Render durchführen
+      render();
+    });
+  })();
 </script>
 </body>
 </html>

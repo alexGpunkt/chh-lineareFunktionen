@@ -1,870 +1,908 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📐 Lineare Funktionen · PRO</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📐 Lineare Funktionen • visualisiert & interaktiv</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        :root {
-            --bg: #0c0f1c;
-            --card: #1b2235;
-            --card-border: #2a3450;
-            --accent: #5abfff;
-            --accent-soft: rgba(90, 190, 255, 0.2);
-            --text: #eef3ff;
-            --text-dim: #a5b3d9;
-            --success: #6fcf97;
-            --success-soft: rgba(111, 207, 151, 0.1);
-            --error: #eb5757;
-            --error-soft: rgba(235, 87, 87, 0.1);
-            --radius: 20px;
-            --radius-sm: 40px;
-            --transition: all 0.2s ease;
-        }
+    :root {
+      --bg: #0c0f1c;
+      --card-bg: rgba(25, 30, 45, 0.9);
+      --border: rgba(90, 190, 255, 0.2);
+      --accent: #5abfff;
+      --accent-glow: rgba(90, 190, 255, 0.3);
+      --text: #f0f4ff;
+      --text-dim: #a5b3d9;
+      --success: #6fcf97;
+      --error: #eb5757;
+      --radius: 28px;
+      --radius-sm: 18px;
+    }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.5;
-            padding: 1.5rem;
-            min-height: 100vh;
-        }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
 
-        .app {
-            max-width: 1300px;
-            margin: 0 auto;
-            background: #111726;
-            border-radius: var(--radius);
-            padding: 2rem;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
+    /* Hauptcontainer – wie ein großes grafisches Panel */
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      background: rgba(15, 20, 30, 0.7);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 2rem 2rem 2rem 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(90, 190, 255, 0.1) inset;
+    }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
+    /* Kopfzeile mit Navigation – sehr reduziert im Text, Fokus auf Icons/Symbole */
+    .top-bar {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
 
-        .header h2 {
-            font-weight: 500;
-            letter-spacing: -0.01em;
-        }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 60px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
 
-        .qr-btn {
-            background: transparent;
-            border: 1px solid var(--accent);
-            padding: 0.5rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
+    .nav-btn span {
+      font-size: 1.4rem;
+    }
 
-        .qr-btn:hover {
-            background: var(--accent-soft);
-            transform: translateY(-1px);
-        }
+    .nav-btn:hover {
+      background: rgba(90, 190, 255, 0.1);
+      color: white;
+    }
 
-        .qr-btn:active {
-            transform: translateY(0);
-        }
+    .nav-btn.active {
+      background: rgba(90, 190, 255, 0.2);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
 
-        /* Navigation */
-        .topbar {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
+    /* Hauptbereich – hier passiert die ganze Magie */
+    .main-panel {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 1.8rem;
+    }
 
-        .nav-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-dim);
-            padding: 0.6rem 1.4rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
+    /* Linke Seite: immer der Graph & große Interaktion */
+    .graph-area {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
 
-        .nav-btn:hover {
-            border-color: var(--accent);
-            color: white;
-        }
+    .graph-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
 
-        .nav-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-            color: white;
-            font-weight: 500;
-        }
+    .graph-title span {
+      background: rgba(90, 190, 255, 0.15);
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+    }
 
-        /* Hauptbereich */
-        .main {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 2rem;
-        }
+    .svg-container {
+      background: #0b0f1a;
+      border-radius: var(--radius-sm);
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
 
-        @media (max-width: 1000px) {
-            .main {
-                grid-template-columns: 1fr;
-            }
-        }
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
 
-        .card {
-            background: var(--card);
-            padding: 1.8rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
+    /* Infos zur aktuellen Funktion – sehr grafisch mit Farben */
+    .func-info {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
 
-        /* SVG Container */
-        .svg-container {
-            background: #0f1423;
-            border-radius: 16px;
-            padding: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
+    .chip {
+      background: rgba(90, 190, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 0.5rem 1.2rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--accent);
+      backdrop-filter: blur(4px);
+    }
 
-        svg {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 12px;
-        }
+    .chip i {
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-right: 0.5rem;
+    }
 
-        /* Erklärungen */
-        .explanation {
-            margin-top: 1.2rem;
-            font-size: 0.95rem;
-            color: var(--text-dim);
-        }
+    /* Rechte Seite: Übungen & Buch-Bild – alles visuell */
+    .exercise-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
 
-        .explanation b {
-            color: var(--text);
-            font-weight: 600;
-        }
+    .book-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
 
-        .steps {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #cfd9ff;
-            list-style: none;
-            counter-reset: step-counter;
-        }
+    .book-card h3 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
 
-        .steps li {
-            margin-bottom: 0.5rem;
-            counter-increment: step-counter;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    .book-image {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      background: #05070c;
+      padding: 0.5rem;
+    }
 
-        .steps li::before {
-            content: counter(step-counter) "️⃣";
-            opacity: 0.8;
-            font-size: 0.9rem;
-        }
+    .book-image svg {
+      width: 100%;
+      height: auto;
+    }
 
-        .chip {
-            display: inline-block;
-            background: var(--accent-soft);
-            padding: 0.3rem 0.8rem;
-            border-radius: var(--radius-sm);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            border: 1px solid var(--accent);
-        }
+    .exercise-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
 
-        /* Formularelemente */
-        .input-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
+    .exercise-title {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      color: var(--accent);
+      font-size: 1.2rem;
+    }
 
-        input {
-            background: #0f1423;
-            border: 1px solid var(--card-border);
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            width: 130px;
-        }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
 
-        input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-soft);
-        }
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.8rem;
+      border-radius: 60px;
+      border-left: 3px solid var(--accent);
+    }
 
-        input::placeholder {
-            color: #4a5670;
-        }
+    .step-label {
+      min-width: 40px;
+      font-weight: bold;
+      color: var(--accent);
+    }
 
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin: 1.2rem 0 0.8rem;
-        }
+    .step-row input {
+      flex: 2;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 0.6rem 1.2rem;
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+    }
 
-        button {
-            background: var(--accent-soft);
-            border: 1px solid var(--accent);
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            color: white;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            flex: 0 1 auto;
-        }
+    .step-row input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
 
-        button:hover {
-            background: rgba(90, 190, 255, 0.3);
-            transform: translateY(-1px);
-        }
+    .step-row .step-hint {
+      flex: 1;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
 
-        button:active {
-            transform: translateY(0);
-        }
+    .input-group input {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 0.8rem 1.2rem;
+      color: white;
+      font-size: 1rem;
+      outline: none;
+    }
 
-        button.secondary {
-            border-color: var(--text-dim);
-            background: transparent;
-        }
+    .input-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
 
-        button.secondary:hover {
-            border-color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
+    .button-group {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin: 1.5rem 0 0.5rem;
+    }
 
-        /* Feedback */
-        .feedback {
-            margin-top: 1.2rem;
-            padding: 0.8rem 1.2rem;
-            border-left: 4px solid var(--accent);
-            border-radius: 12px;
-            background: rgba(90, 190, 255, 0.05);
-            font-weight: 500;
-            animation: slideIn 0.3s ease;
-        }
+    .btn {
+      background: rgba(90, 190, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 0.6rem 1.4rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .btn-primary {
+      background: rgba(90, 190, 255, 0.3);
+      border-color: var(--accent);
+    }
 
-        .feedback.success {
-            border-left-color: var(--success);
-            background: var(--success-soft);
-            color: #d0f0da;
-        }
+    .btn-primary:hover {
+      background: rgba(90, 190, 255, 0.5);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
 
-        .feedback.error {
-            border-left-color: var(--error);
-            background: var(--error-soft);
-            color: #f5c2c2;
-        }
+    .btn:hover {
+      background: rgba(90, 190, 255, 0.25);
+    }
 
-        /* Tabelle */
-        .table-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
+    .feedback {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 60px;
+      padding: 0.8rem 1.2rem;
+      margin-top: 1rem;
+      border-left: 4px solid var(--accent);
+      font-size: 0.95rem;
+      color: var(--text-dim);
+    }
 
-        .table-label {
-            min-width: 40px;
-            color: var(--text-dim);
-            font-family: monospace;
-        }
+    .feedback.success {
+      border-left-color: var(--success);
+      color: #a5e0b5;
+    }
 
-        /* QR Overlay */
-        .qr-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s ease;
-        }
+    .feedback.error {
+      border-left-color: var(--error);
+      color: #f5a3a3;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1rem 0;
+    }
 
-        .qr-box {
-            background: var(--card);
-            padding: 2.5rem;
-            border-radius: var(--radius);
-            text-align: center;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .qr-box h3 {
-            margin-bottom: 1.5rem;
-            color: var(--accent);
-        }
-
-        .qr-box img {
-            margin: 1.5rem 0;
-            border-radius: 12px;
-            background: white;
-            padding: 0.5rem;
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
-
-        .mt-2 {
-            margin-top: 0.75rem;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-    </style>
+    @media (max-width: 1000px) {
+      .main-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app">
-    <div class="header">
-        <h2>📐 Lineare Funktionen · PRO</h2>
-        <button class="qr-btn hidden" id="qrButton">📱 QR-Code</button>
-    </div>
+  <!-- Obere Navigation: nur Icons + kurze Begriffe -->
+  <div class="top-bar">
+    <button class="nav-btn active" data-section="coords"><span>📌</span> Punkte</button>
+    <button class="nav-btn" data-section="table"><span>📊</span> Tabelle</button>
+    <button class="nav-btn" data-section="normalform"><span>📈</span> m & b</button>
+    <button class="nav-btn" data-section="parallel"><span>⚡</span> Parallel</button>
+    <button class="nav-btn" data-section="nullstellen"><span>❌</span> Nullstellen</button>
+  </div>
 
-    <div class="topbar">
-        <button class="nav-btn active" data-section="coords">📌 Punkte</button>
-        <button class="nav-btn" data-section="table">📊 Tabelle</button>
-        <button class="nav-btn" data-section="normal">📈 m & b</button>
-        <button class="nav-btn" data-section="parallel">⚡ Parallel</button>
-    </div>
-
-    <div class="main">
-        <div class="card" id="graphCard"></div>
-        <div class="card" id="exerciseCard"></div>
-    </div>
-</div>
-
-<div id="qrOverlay" class="qr-overlay hidden">
-    <div class="qr-box">
-        <h3>📱 Auf Smartphone öffnen</h3>
-        <img id="qrImage" alt="QR-Code">
-        <div class="button-group" style="justify-content: center;">
-            <button onclick="closeQR()">Schließen</button>
-        </div>
-    </div>
+  <!-- Dynamischer Hauptbereich -->
+  <div class="main-panel" id="mainPanel">
+    <!-- Wird per JavaScript befüllt -->
+  </div>
 </div>
 
 <script>
-    (function() {
-        'use strict';
+  (function() {
+    // ----- Hilfsfunktionen (mathematisch & grafisch) -----
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-        // ==================== KONSTANTEN & HILFSFUNKTIONEN ====================
-        const SVG_BOUNDS = { min: -6, max: 6 };
-        const EPSILON = 0.01;
+    // Zufällige Steigung (nicht 0, nicht zu extrem)
+    function randomSlope() {
+      let m;
+      do {
+        m = rand(-4, 4);
+      } while (m === 0);
+      return m;
+    }
 
-        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        
-        const randomSlope = () => {
-            let m;
-            do {
-                m = randomInt(-4, 4);
-            } while (Math.abs(m) < EPSILON);
-            return m;
-        };
-
-        const parseInput = (val) => {
-            if (!val) return NaN;
-            const str = val.replace(/,/g, '.').trim();
-            
-            // Bruch parsing
-            if (str.includes('/')) {
-                const parts = str.split('/').map(Number);
-                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && Math.abs(parts[1]) > EPSILON) {
-                    return parts[0] / parts[1];
-                }
-            }
-            
-            const num = parseFloat(str);
-            return isNaN(num) ? NaN : num;
-        };
-
-        // ==================== SVG RENDERING ====================
-        const clipLine = (m, b) => {
-            const { min: xMin, max: xMax } = SVG_BOUNDS;
-            const yMin = xMin, yMax = xMax;
-            const points = [];
-            
-            const addPoint = (x, y) => {
-                if (x >= xMin - EPSILON && x <= xMax + EPSILON && 
-                    y >= yMin - EPSILON && y <= yMax + EPSILON) {
-                    points.push({ x: Math.max(xMin, Math.min(xMax, x)), 
-                                 y: Math.max(yMin, Math.min(yMax, y)) });
-                }
-            };
-
-            // Endpunkte an den Rändern
-            addPoint(xMin, m * xMin + b);
-            addPoint(xMax, m * xMax + b);
-
-            // Schnittpunkte mit den Rändern
-            if (Math.abs(m) > EPSILON) {
-                addPoint((yMin - b) / m, yMin);
-                addPoint((yMax - b) / m, yMax);
-            }
-
-            // Deduplizieren und auf 2 Punkte begrenzen
-            return points.slice(0, 2);
-        };
-
-        const renderSVG = (m, b, options = {}) => {
-            const { triangle = false, highlight = null } = options;
-            const { min, max } = SVG_BOUNDS;
-            const range = max - min;
-            
-            let gridLines = '';
-            
-            // Gitterlinien
-            for (let x = min; x <= max; x++) {
-                if (x === 0) continue; // Achsen separat
-                gridLines += `<line x1="${x}" y1="${min}" x2="${x}" y2="${max}" stroke="#2a3450" stroke-width="0.05"/>`;
-            }
-            for (let y = min; y <= max; y++) {
-                if (y === 0) continue;
-                gridLines += `<line x1="${min}" y1="${y}" x2="${max}" y2="${y}" stroke="#2a3450" stroke-width="0.05"/>`;
-            }
-
-            // Achsen
-            const axes = `
-                <line x1="${min}" y1="0" x2="${max}" y2="0" stroke="#5abfff" stroke-width="0.12"/>
-                <line x1="0" y1="${min}" x2="0" y2="${max}" stroke="#5abfff" stroke-width="0.12"/>
-            `;
-
-            // Funktionslinie
-            let functionLine = '';
-            if (m !== null && !isNaN(m) && !isNaN(b)) {
-                const segment = clipLine(m, b);
-                if (segment.length === 2) {
-                    functionLine = `<line x1="${segment[0].x}" y1="${segment[0].y}" 
-                                           x2="${segment[1].x}" y2="${segment[1].y}" 
-                                           stroke="#5abfff" stroke-width="0.2" stroke-linecap="round"/>`;
-                }
-            }
-
-            // Steigungsdreieck
-            let triangleMark = '';
-            if (triangle && m !== null && !isNaN(m) && !isNaN(b) && Math.abs(m) < 10) {
-                const run = 1;
-                const rise = m;
-                const p1 = { x: 0, y: b };
-                const p2 = { x: run, y: b };
-                const p3 = { x: run, y: b + rise };
-                
-                // Nur zeichnen wenn im sichtbaren Bereich
-                if (Math.abs(p1.x) <= max && Math.abs(p1.y) <= max &&
-                    Math.abs(p2.x) <= max && Math.abs(p2.y) <= max &&
-                    Math.abs(p3.x) <= max && Math.abs(p3.y) <= max) {
-                    triangleMark = `
-                        <polygon points="${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}"
-                                 fill="rgba(90,190,255,0.2)" stroke="#5abfff" stroke-width="0.1" stroke-dasharray="0.2"/>
-                    `;
-                }
-            }
-
-            // Hervorhebung
-            let highlightMark = '';
-            if (highlight) {
-                highlightMark = `<circle cx="${highlight.x}" cy="${highlight.y}" r="0.35" fill="#eb5757" stroke="white" stroke-width="0.1"/>`;
-            }
-
-            // Zahlen an den Achsen (einfach)
-            let labels = '';
-            for (let i = min; i <= max; i++) {
-                if (i === 0) continue;
-                labels += `<text x="${i - 0.2}" y="-0.2" fill="#6b7b9c" font-size="0.3">${i}</text>`;
-                labels += `<text x="-0.4" y="${i + 0.1}" fill="#6b7b9c" font-size="0.3">${-i}</text>`;
-            }
-
-            return `
-                <div class="svg-container">
-                    <svg viewBox="${min} ${min} ${range} ${range}" xmlns="http://www.w3.org/2000/svg">
-                        ${gridLines}
-                        ${axes}
-                        ${labels}
-                        ${functionLine}
-                        ${triangleMark}
-                        ${highlightMark}
-                    </svg>
-                </div>
-            `;
-        };
-
-        // ==================== APP STATE ====================
-        let currentSection = 'coords';
-        let currentExample = {};
-        let feedbackElement = null;
-
-        // ==================== BEISPIELE GENERIEREN ====================
-        const generateExample = () => {
-            switch (currentSection) {
-                case 'coords':
-                    currentExample = {
-                        target: {
-                            x: randomInt(-5, 5),
-                            y: randomInt(-5, 5)
-                        }
-                    };
-                    break;
-
-                case 'table':
-                    currentExample = {
-                        m: randomSlope(),
-                        b: randomInt(-4, 4),
-                        xs: [-2, -1, 0, 1, 2]
-                    };
-                    break;
-
-                case 'normal':
-                    currentExample = {
-                        m: randomSlope(),
-                        b: randomInt(-4, 4)
-                    };
-                    break;
-
-                case 'parallel':
-                    const m = randomSlope();
-                    const b = randomInt(-4, 4);
-                    const P = {
-                        x: randomInt(-3, 3),
-                        y: randomInt(-3, 3)
-                    };
-                    const mPerp = (Math.abs(m) < EPSILON) ? 1000 : -1 / m; // Vertikal bei m=0
-                    
-                    currentExample = {
-                        m, b, P,
-                        mPerp,
-                        bPar: P.y - m * P.x,
-                        bPerp: P.y - mPerp * P.x
-                    };
-                    break;
-            }
-        };
-
-        // ==================== UI RENDERING ====================
-        const renderSection = () => {
-            const graphCard = document.getElementById('graphCard');
-            const exerciseCard = document.getElementById('exerciseCard');
-            
-            if (!graphCard || !exerciseCard) return;
-
-            // Graph Card immer zuerst rendern
-            let graphHTML = '';
-            let exerciseHTML = '';
-
-            switch (currentSection) {
-                case 'coords':
-                    graphHTML = renderSVG(null, null, { highlight: currentExample.target });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📌 Punkt im Koordinatensystem</b>
-                            <p>Koordinaten: (x | y) — zuerst x, dann y.</p>
-                            <ul class="steps">
-                                <li>Vom Ursprung starten</li>
-                                <li>Nach rechts/links (x)</li>
-                                <li>Nach oben/unten (y)</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="input-group">
-                            <input id="coordsInput" placeholder="x, y" autocomplete="off">
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkCoords()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'table':
-                    graphHTML = renderSVG(currentExample.m, currentExample.b);
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📊 Wertetabelle</b>
-                            <p>Formel: <span class="chip">y = m·x + b</span></p>
-                            <ul class="steps">
-                                <li>x einsetzen</li>
-                                <li>m·x berechnen</li>
-                                <li>b addieren</li>
-                            </ul>
-                        </div>
-                    `;
-
-                    exerciseHTML = '<div style="margin-bottom: 1rem;">';
-                    currentExample.xs.forEach((x, i) => {
-                        exerciseHTML += `
-                            <div class="table-row">
-                                <span class="table-label">x = ${x}</span>
-                                <input id="t${i}" placeholder="y" autocomplete="off">
-                            </div>
-                        `;
-                    });
-                    exerciseHTML += `</div>
-                        <div class="button-group">
-                            <button onclick="checkTable()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'normal':
-                    graphHTML = renderSVG(currentExample.m, currentExample.b, { triangle: true });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>📈 Steigung & Achsenabschnitt</b>
-                            <p><span class="chip">b</span> = Schnittpunkt mit y-Achse</p>
-                            <p><span class="chip">m</span> = Anstieg (Δy / Δx)</p>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div class="input-group">
-                            <input id="mInput" placeholder="m" autocomplete="off">
-                            <input id="bInput" placeholder="b" autocomplete="off">
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkNormal()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-
-                case 'parallel':
-                    graphHTML = renderSVG(currentExample.m, currentExample.b, { highlight: currentExample.P });
-                    graphHTML += `
-                        <div class="explanation">
-                            <b>⚡ Parallele & Senkrechte</b>
-                            <p>Parallel: gleiche Steigung m</p>
-                            <p>Senkrecht: m₁ · m₂ = -1</p>
-                            <p>Punkt P (rot) liegt auf beiden Geraden</p>
-                        </div>
-                    `;
-
-                    exerciseHTML = `
-                        <div style="margin-bottom: 1rem;">
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Parallel m:</span>
-                                <input id="pm" placeholder="m" autocomplete="off">
-                            </div>
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Parallel b:</span>
-                                <input id="pb" placeholder="b" autocomplete="off">
-                            </div>
-                            <div class="input-group mt-2">
-                                <span style="min-width: 80px;">Senkrecht m:</span>
-                                <input id="sm" placeholder="m" autocomplete="off">
-                            </div>
-                            <div class="input-group">
-                                <span style="min-width: 80px;">Senkrecht b:</span>
-                                <input id="sb" placeholder="b" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button onclick="checkParallel()">✓ Prüfen</button>
-                            <button class="secondary" onclick="newExample()">↻ Neu</button>
-                        </div>
-                        <div class="feedback" id="feedback"></div>
-                    `;
-                    break;
-            }
-
-            graphCard.innerHTML = graphHTML;
-            exerciseCard.innerHTML = exerciseHTML;
-            feedbackElement = document.getElementById('feedback');
-        };
-
-        // ==================== PRÜFFUNKTIONEN ====================
-        window.checkCoords = () => {
-            const input = document.getElementById('coordsInput');
-            if (!input || !feedbackElement) return;
-            
-            const parts = input.value.split(',').map(Number);
-            const isValid = parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]);
-            
-            if (isValid && parts[0] === currentExample.target.x && parts[1] === currentExample.target.y) {
-                feedbackElement.textContent = '✅ Richtig! Gut gemacht!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = `❌ Gesucht war (${currentExample.target.x} | ${currentExample.target.y})`;
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.checkTable = () => {
-            if (!feedbackElement || !currentExample.xs) return;
-            
-            let allCorrect = true;
-            currentExample.xs.forEach((x, i) => {
-                const input = document.getElementById(`t${i}`);
-                if (input) {
-                    const val = parseInput(input.value);
-                    const expected = currentExample.m * x + currentExample.b;
-                    if (isNaN(val) || Math.abs(val - expected) > EPSILON) {
-                        allCorrect = false;
-                    }
-                }
-            });
-
-            feedbackElement.textContent = allCorrect ? '✅ Alles richtig!' : '❌ Mindestens ein Wert ist falsch';
-            feedbackElement.className = allCorrect ? 'feedback success' : 'feedback error';
-        };
-
-        window.checkNormal = () => {
-            const mInput = document.getElementById('mInput');
-            const bInput = document.getElementById('bInput');
-            if (!mInput || !bInput || !feedbackElement) return;
-
-            const m = parseInput(mInput.value);
-            const b = parseInput(bInput.value);
-
-            if (!isNaN(m) && !isNaN(b) && 
-                Math.abs(m - currentExample.m) < EPSILON && 
-                Math.abs(b - currentExample.b) < EPSILON) {
-                feedbackElement.textContent = '✅ Korrekt!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = `❌ Richtig wäre m = ${currentExample.m}, b = ${currentExample.b}`;
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        window.checkParallel = () => {
-            const pm = parseInput(document.getElementById('pm')?.value);
-            const pb = parseInput(document.getElementById('pb')?.value);
-            const sm = parseInput(document.getElementById('sm')?.value);
-            const sb = parseInput(document.getElementById('sb')?.value);
-            
-            if (!feedbackElement) return;
-
-            const parallelOK = !isNaN(pm) && !isNaN(pb) && 
-                               Math.abs(pm - currentExample.m) < EPSILON && 
-                               Math.abs(pb - currentExample.bPar) < EPSILON;
-            
-            const perpOK = !isNaN(sm) && !isNaN(sb) && 
-                           (Math.abs(currentExample.m) < EPSILON ? Math.abs(sm) > 100 : Math.abs(sm - currentExample.mPerp) < EPSILON) &&
-                           Math.abs(sb - currentExample.bPerp) < EPSILON;
-
-            if (parallelOK && perpOK) {
-                feedbackElement.textContent = '✅ Alles richtig!';
-                feedbackElement.className = 'feedback success';
-            } else {
-                feedbackElement.textContent = '❌ Nicht korrekt. Überprüfe beide Geraden.';
-                feedbackElement.className = 'feedback error';
-            }
-        };
-
-        // ==================== NAVIGATION ====================
-        window.newExample = () => {
-            generateExample();
-            renderSection();
-        };
-
-        // ==================== QR CODE ====================
-        window.openQR = () => {
-            const overlay = document.getElementById('qrOverlay');
-            const qrImg = document.getElementById('qrImage');
-            if (overlay && qrImg) {
-                overlay.classList.remove('hidden');
-                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(window.location.href)}`;
-            }
-        };
-
-        window.closeQR = () => {
-            document.getElementById('qrOverlay')?.classList.add('hidden');
-        };
-
-        // ==================== INITIALISIERUNG ====================
-        const init = () => {
-            // Navigation
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentSection = btn.dataset.section;
-                    generateExample();
-                    renderSection();
-                });
-            });
-
-            // QR Button (nur auf GitHub Pages)
-            const qrBtn = document.getElementById('qrButton');
-            if (window.location.hostname.includes('github.io') || window.location.hostname.includes('localhost')) {
-                qrBtn?.classList.remove('hidden');
-                qrBtn?.addEventListener('click', openQR);
-            }
-
-            // Overlay schließen mit Escape
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    closeQR();
-                }
-            });
-
-            // Initialen State laden
-            generateExample();
-            renderSection();
-        };
-
-        // Start
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
+    // Bruch-Darstellung für nice Anzeige
+    function asFraction(m) {
+      if (Number.isInteger(m)) return m.toString();
+      const eps = 0.001;
+      for (let den = 1; den <= 8; den++) {
+        for (let num = -8; num <= 8; num++) {
+          if (Math.abs(m - num / den) < eps) return `${num}/${den}`;
         }
-    })();
+      }
+      return m.toFixed(2);
+    }
+
+    // Nullstelle berechnen
+    function computeNullstelle(m, b) {
+      if (m === 0) return null; // keine oder unendlich viele
+      return -b / m;
+    }
+
+    // Koordinatensystem SVG (achte auf korrekte y-Ausrichtung)
+    function renderSVG(m, b, points = [], highlightPoint = null, drawTriangle = false, P = null, nullstelle = null) {
+      const xMin = -6, xMax = 6, yMin = -6, yMax = 6;
+      const viewBox = `${xMin} ${-yMax} ${xMax - xMin} ${yMax - yMin}`; // y-Achse flipped für SVG
+
+      // Gitterlinien
+      let grid = '';
+      for (let x = xMin; x <= xMax; x++) {
+        grid += `<line x1="${x}" y1="${-yMin}" x2="${x}" y2="${-yMax}" stroke="#2A3450" stroke-width="0.05" />`;
+      }
+      for (let y = yMin; y <= yMax; y++) {
+        grid += `<line x1="${xMin}" y1="${-y}" x2="${xMax}" y2="${-y}" stroke="#2A3450" stroke-width="0.05" />`;
+      }
+      // Achsen
+      grid += `<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5ABFFF" stroke-width="0.1" />`;
+      grid += `<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5ABFFF" stroke-width="0.1" />`;
+
+      // Punkte (werden in mathematischen Koordinaten erwartet, für SVG y negieren)
+      let pointsSvg = '';
+      if (points && points.length) {
+        points.forEach(p => {
+          pointsSvg += `<circle cx="${p.x}" cy="${-p.y}" r="0.25" fill="#FFB347" />`;
+        });
+      }
+
+      // Gerade: zwei Punkte berechnen
+      const y1 = m * xMin + b;
+      const y2 = m * xMax + b;
+      const line = `<line x1="${xMin}" y1="${-y1}" x2="${xMax}" y2="${-y2}" stroke="#5ABFFF" stroke-width="0.15" />`;
+
+      // Highlight (roter Punkt) für spezielle Punkte (z.B. P oder Nullstelle)
+      let highlight = '';
+      if (highlightPoint) {
+        highlight += `<circle cx="${highlightPoint.x}" cy="${-highlightPoint.y}" r="0.3" fill="#EB5757" />`;
+      }
+      if (P) {
+        highlight += `<circle cx="${P.x}" cy="${-P.y}" r="0.3" fill="#EB5757" />`;
+      }
+      if (nullstelle !== null) {
+        const x0 = nullstelle;
+        const y0 = 0;
+        if (x0 >= xMin && x0 <= xMax) {
+          highlight += `<circle cx="${x0}" cy="${-y0}" r="0.35" fill="#EB5757" />`;
+          // Beschriftung
+          highlight += `<text x="${x0 + 0.3}" y="${-0.3}" fill="#EB5757" font-size="0.5">N</text>`;
+        }
+      }
+
+      // Steigungsdreieck (optional)
+      let triangle = '';
+      if (drawTriangle && m !== 0) {
+        const run = 1; // nach rechts
+        const rise = m * run;
+        const startX = 0, startY = b;
+        const endX = startX + run, endY = startY + rise;
+        // Dreieck als gestrichelte Linien
+        triangle = `
+          <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+          <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+          <text x="${(startX+endX)/2}" y="${-startY + 0.4}" fill="#A5B3D9" font-size="0.4">1</text>
+          <text x="${endX + 0.3}" y="${-(startY+rise/2)}" fill="#A5B3D9" font-size="0.4">${asFraction(m)}</text>
+        `;
+      }
+
+      return `
+        <svg viewBox="${viewBox}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <!-- Gitter und Achsen -->
+          ${grid}
+          <!-- Gerade -->
+          ${line}
+          <!-- Steigungsdreieck -->
+          ${triangle}
+          <!-- Punkte -->
+          ${pointsSvg}
+          <!-- Highlight (roter Punkt) -->
+          ${highlight}
+        </svg>
+      `;
+    }
+
+    // Buch-SVG (mini Visu)
+    function bookSVG(type) {
+      if (type === 'coords') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><circle cx="30" cy="30" r="3" fill="#FFB347"/><circle cx="70" cy="20" r="3" fill="#FFB347"/><line x1="10" y1="30" x2="90" y2="30" stroke="#5ABFFF" stroke-width="1.5"/><line x1="50" y1="10" x2="50" y2="50" stroke="#5ABFFF" stroke-width="1.5"/></svg>`;
+      } else if (type === 'table') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="5" y1="20" x2="95" y2="20" stroke="#5ABFFF"/><line x1="35" y1="5" x2="35" y2="55" stroke="#5ABFFF"/><line x1="65" y1="5" x2="65" y2="55" stroke="#5ABFFF"/><text x="20" y="40" fill="white" font-size="6">x</text><text x="50" y="40" fill="white" font-size="6">y</text><text x="80" y="40" fill="white" font-size="6">y=mx+b</text></svg>`;
+      } else if (type === 'normal') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="45" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><circle cx="20" cy="40" r="2.5" fill="#FFB347"/><circle cx="45" cy="27.5" r="2.5" fill="#FFB347"/><text x="20" y="15" fill="white" font-size="5">m = rise/run</text></svg>`;
+      } else if (type === 'parallel') {
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="40" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><line x1="10" y1="45" x2="90" y2="15" stroke="#EB5757" stroke-width="2"/><circle cx="50" cy="27" r="3" fill="#EB5757"/></svg>`;
+      } else { // nullstellen
+        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="15" y1="45" x2="85" y2="15" stroke="#5ABFFF" stroke-width="2"/><circle cx="50" cy="30" r="3" fill="#EB5757"/><text x="45" y="20" fill="white" font-size="5">N</text><text x="20" y="20" fill="white" font-size="4">f(x)=0</text></svg>`;
+      }
+    }
+
+    // ----- Zustand der App -----
+    let currentSection = 'coords';
+    let currentExample = null;
+
+    // Funktion zum Generieren eines Beispiels je nach Sektion
+    function generateExample(section) {
+      if (section === 'coords') {
+        const x = rand(-5, 5);
+        const y = rand(-5, 5);
+        return { target: { x, y } };
+      } else if (section === 'table') {
+        const m = randomSlope();
+        const b = rand(-4, 4);
+        const xs = [-2, -1, 0, 1, 2];
+        const ys = xs.map(x => m * x + b);
+        return { m, b, xs, ys };
+      } else if (section === 'normalform') {
+        const m = randomSlope();
+        const b = rand(-4, 4);
+        return { m, b };
+      } else if (section === 'parallel') {
+        const m = randomSlope();
+        const b = rand(-4, 4);
+        const P = { x: rand(-3, 3), y: rand(-3, 3) };
+        const mPerp = (m !== 0) ? -1 / m : 999; // bei m=0 Sonderfall
+        const bPar = P.y - m * P.x;
+        const bPerp = (m !== 0) ? P.y - mPerp * P.x : 0;
+        return { m, b, P, mPerp, bPar, bPerp };
+      } else { // nullstellen
+        const m = randomSlope();
+        const b = rand(-4, 4);
+        const nullstelle = computeNullstelle(m, b);
+        return { m, b, nullstelle };
+      }
+    }
+
+    // Initiales Beispiel
+    currentExample = generateExample(currentSection);
+
+    // ----- Render-Funktion: Baut UI komplett neu -----
+    function render() {
+      const panel = document.getElementById('mainPanel');
+      const section = currentSection;
+      const ex = currentExample;
+
+      // Linke Seite (Graph) ist immer ähnlich, aber mit Variationen
+      let graphTitle = '';
+      let graphSVG = '';
+      let funcChips = '';
+
+      if (section === 'coords') {
+        graphTitle = '📍 Punkt finden';
+        graphSVG = renderSVG(0, 0, [], ex.target); // nur Koordinatensystem + Zielpunkt rot
+        funcChips = `<div class="chip"><i>Gesucht:</i> (${ex.target.x} | ${ex.target.y})</div>`;
+      } else if (section === 'table') {
+        graphTitle = '📊 Wertetabelle → Graph';
+        graphSVG = renderSVG(ex.m, ex.b, ex.xs.map((x, i) => ({ x, y: ex.ys[i] })));
+        funcChips = `<div class="chip"><i>y =</i> ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}</div>`;
+      } else if (section === 'normalform') {
+        graphTitle = '📈 Steigung & Achsenabschnitt';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, true); // mit Dreieck
+        funcChips = `<div class="chip"><i>m =</i> ${asFraction(ex.m)}</div><div class="chip"><i>b =</i> ${ex.b}</div>`;
+      } else if (section === 'parallel') {
+        graphTitle = '⚡ Parallele & Senkrechte';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, false, ex.P);
+        funcChips = `<div class="chip"><i>m =</i> ${asFraction(ex.m)}</div><div class="chip"><i>P =</i> (${ex.P.x}|${ex.P.y})</div>`;
+      } else { // nullstellen
+        graphTitle = '❌ Nullstellen berechnen';
+        graphSVG = renderSVG(ex.m, ex.b, [], null, false, null, ex.nullstelle);
+        funcChips = `<div class="chip"><i>f(x) =</i> ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}</div>`;
+      }
+
+      // Rechte Seite: Buch + Übung
+      let bookType = section;
+      let exerciseHTML = '';
+
+      if (section === 'coords') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>🎯</span> Klick-Übung</div>
+            <div class="input-group">
+              <input type="text" id="coordsAnswer" placeholder="x, y eingaben (z.B. 2,-3)">
+            </div>
+            <div class="button-group">
+              <button class="btn" id="coordsCheckBtn">🖱️ Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neues Beispiel</button>
+            </div>
+            <div class="feedback" id="coordsFeedback">Gib die Koordinaten des roten Punkts ein.</div>
+          </div>
+        `;
+      } else if (section === 'table') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>📝</span> Tabelle vervollständigen</div>
+            <div class="input-group">
+              ${ex.xs.map((x, idx) => `
+                <div style="display: flex; gap:0.3rem; align-items:center; margin-bottom:0.3rem;">
+                  <span style="width:2rem;">x=${x}</span>
+                  <input type="text" id="tableInput${idx}" placeholder="y" style="width:70px;">
+                </div>
+              `).join('')}
+            </div>
+            <div class="button-group">
+              <button class="btn" id="tableCheckBtn">✅ Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="tableFeedback">Trage die y-Werte ein (y = m·x + b).</div>
+          </div>
+        `;
+      } else if (section === 'normalform') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>📐</span> m & b bestimmen</div>
+            <div class="input-group">
+              <input type="text" id="normalM" placeholder="Steigung m (z.B. 2 oder 3/4)">
+              <input type="text" id="normalB" placeholder="Achsenabschnitt b">
+            </div>
+            <div class="button-group">
+              <button class="btn" id="normalCheckBtn">🔍 Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="normalFeedback">Lies m und b aus dem Graphen ab.</div>
+          </div>
+        `;
+      } else if (section === 'parallel') {
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>⚡</span> Parallele & Senkrechte</div>
+            <div class="input-group">
+              <input type="text" id="parallelM" placeholder="m∥ (parallel)">
+              <input type="text" id="parallelB" placeholder="b∥">
+            </div>
+            <div class="input-group">
+              <input type="text" id="perpM" placeholder="m⊥ (senkrecht)">
+              <input type="text" id="perpB" placeholder="b⊥">
+            </div>
+            <div class="button-group">
+              <button class="btn" id="parallelCheckBtn">🔍 Prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="parallelFeedback">Bestimme parallele und senkrechte Gerade durch P.</div>
+          </div>
+        `;
+      } else { // nullstellen
+        const nullstelle = ex.nullstelle !== null ? ex.nullstelle.toFixed(2) : 'keine';
+        exerciseHTML = `
+          <div class="exercise-card">
+            <div class="exercise-title"><span>❌</span> Nullstellen Schritt für Schritt</div>
+            <div class="input-group">
+              <div class="step-row">
+                <span class="step-label">1️⃣</span>
+                <input type="text" id="step1" placeholder="f(x) = 0">
+                <span class="step-hint">f(x) = 0 setzen</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">2️⃣</span>
+                <input type="text" id="step2" placeholder="mx + b = 0">
+                <span class="step-hint">Funktion einsetzen</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">3️⃣</span>
+                <input type="text" id="step3" placeholder="mx = -b">
+                <span class="step-hint">b auf andere Seite</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">4️⃣</span>
+                <input type="text" id="step4" placeholder="x = -b/m">
+                <span class="step-hint">Durch m dividieren</span>
+              </div>
+              <div class="step-row">
+                <span class="step-label">5️⃣</span>
+                <input type="text" id="step5" placeholder="x = ...">
+                <span class="step-hint">Nullstelle berechnen</span>
+              </div>
+            </div>
+            <div class="button-group">
+              <button class="btn" id="nullstellenCheckBtn">🔍 Schritte prüfen</button>
+              <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
+            </div>
+            <div class="feedback" id="nullstellenFeedback">
+              Fülle jeden Umformungsschritt aus. Keinen Schritt auslassen!
+            </div>
+          </div>
+        `;
+      }
+
+      // Komplettes Panel zusammensetzen
+      panel.innerHTML = `
+        <!-- Linke Spalte: Graph -->
+        <div class="graph-area">
+          <div class="graph-title">
+            <span>${graphTitle}</span>
+          </div>
+          <div class="svg-container">
+            ${graphSVG}
+          </div>
+          <div class="func-info">
+            ${funcChips}
+          </div>
+        </div>
+        <!-- Rechte Spalte: Buch + Übung -->
+        <div class="exercise-area">
+          <div class="book-card">
+            <h3><span>📖</span> Buchvorlage</h3>
+            <div class="book-image">
+              ${bookSVG(bookType)}
+            </div>
+          </div>
+          ${exerciseHTML}
+        </div>
+      `;
+
+      // ----- Event-Listener für Buttons (müssen nach dem Rendern neu gebunden werden) -----
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.section === currentSection) btn.classList.add('active');
+      });
+
+      // Neues Beispiel
+      document.querySelectorAll('#newExampleBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentExample = generateExample(currentSection);
+          render();
+        });
+      });
+
+      // Sections umschalten
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          currentSection = e.currentTarget.dataset.section;
+          currentExample = generateExample(currentSection);
+          render();
+        });
+      });
+
+      // ----- Abschnitts-spezifische Prüf-Logik -----
+      if (section === 'coords') {
+        const checkBtn = document.getElementById('coordsCheckBtn');
+        const input = document.getElementById('coordsAnswer');
+        const feedback = document.getElementById('coordsFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const val = input.value.trim();
+            const parts = val.split(',').map(Number);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+              const [x, y] = parts;
+              if (x === ex.target.x && y === ex.target.y) {
+                feedback.textContent = '✅ Richtig! Punkt getroffen.';
+                feedback.className = 'feedback success';
+              } else {
+                feedback.textContent = `❌ Leider falsch. Gesucht: (${ex.target.x}|${ex.target.y})`;
+                feedback.className = 'feedback error';
+              }
+            } else {
+              feedback.textContent = '❌ Bitte Koordinaten im Format x,y eingeben (z.B. 2,-3)';
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'table') {
+        const checkBtn = document.getElementById('tableCheckBtn');
+        const feedback = document.getElementById('tableFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            let allCorrect = true;
+            for (let i = 0; i < ex.xs.length; i++) {
+              const inp = document.getElementById(`tableInput${i}`);
+              if (inp) {
+                const val = parseFloat(inp.value.replace(',', '.'));
+                if (isNaN(val) || Math.abs(val - ex.ys[i]) > 0.01) {
+                  allCorrect = false;
+                  inp.style.borderColor = '#EB5757';
+                } else {
+                  inp.style.borderColor = '#6FCF97';
+                }
+              }
+            }
+            if (allCorrect) {
+              feedback.textContent = '✅ Tabelle richtig! Super.';
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = '❌ Nicht alle Werte stimmen. Kontrolliere die Rechnung.';
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'normalform') {
+        const checkBtn = document.getElementById('normalCheckBtn');
+        const mInp = document.getElementById('normalM');
+        const bInp = document.getElementById('normalB');
+        const feedback = document.getElementById('normalFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const mVal = parseFloat(mInp.value.replace(',', '.'));
+            const bVal = parseFloat(bInp.value.replace(',', '.'));
+            if (!isNaN(mVal) && !isNaN(bVal) && Math.abs(mVal - ex.m) < 0.01 && Math.abs(bVal - ex.b) < 0.01) {
+              feedback.textContent = `✅ Korrekt! m = ${asFraction(ex.m)}, b = ${ex.b}`;
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = `❌ Falsch. Tipp: m = ${asFraction(ex.m)}, b = ${ex.b}`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'parallel') {
+        const checkBtn = document.getElementById('parallelCheckBtn');
+        const mInp = document.getElementById('parallelM');
+        const bInp = document.getElementById('parallelB');
+        const mPerpInp = document.getElementById('perpM');
+        const bPerpInp = document.getElementById('perpB');
+        const feedback = document.getElementById('parallelFeedback');
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            const mPar = parseFloat(mInp.value.replace(',', '.'));
+            const bPar = parseFloat(bInp.value.replace(',', '.'));
+            const mPerp = parseFloat(mPerpInp.value.replace(',', '.'));
+            const bPerp = parseFloat(bPerpInp.value.replace(',', '.'));
+
+            let parOK = !isNaN(mPar) && !isNaN(bPar) && Math.abs(mPar - ex.m) < 0.01 && Math.abs(bPar - ex.bPar) < 0.01;
+            let perpOK = !isNaN(mPerp) && !isNaN(bPerp) && Math.abs(mPerp - ex.mPerp) < 0.01 && Math.abs(bPerp - ex.bPerp) < 0.01;
+
+            if (parOK && perpOK) {
+              feedback.textContent = `✅ Alles richtig! Parallel: y = ${asFraction(ex.m)}x ${ex.bPar>=0?'+':'-'} ${Math.abs(ex.bPar)} ; Senkrecht: y = ${asFraction(ex.mPerp)}x ${ex.bPerp>=0?'+':'-'} ${Math.abs(ex.bPerp)}`;
+              feedback.className = 'feedback success';
+            } else {
+              feedback.textContent = `❌ Nicht korrekt. Parallel: m = ${asFraction(ex.m)}, b = ${ex.bPar}; Senkrecht: m = ${asFraction(ex.mPerp)}, b = ${ex.bPerp}`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+
+      if (section === 'nullstellen') {
+        const checkBtn = document.getElementById('nullstellenCheckBtn');
+        const feedback = document.getElementById('nullstellenFeedback');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        const step5 = document.getElementById('step5');
+
+        if (checkBtn) {
+          checkBtn.addEventListener('click', () => {
+            // Erwartete Werte
+            const expected1 = '0';
+            const expected2 = `${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)} = 0`;
+            const expected3 = `${asFraction(ex.m)}x = ${-ex.b}`;
+            const expected4 = `x = ${asFraction(-ex.b)} / ${asFraction(ex.m)}`;
+            const expected5 = ex.nullstelle !== null ? `x = ${ex.nullstelle.toFixed(2)}` : 'keine Nullstelle';
+
+            // Schritt 1 prüfen
+            const val1 = step1.value.trim();
+            const step1OK = val1 === '0' || val1 === 'f(x)=0' || val1 === 'f(x) = 0';
+            
+            // Schritt 2 prüfen (flexibel)
+            const val2 = step2.value.trim().replace(/\s+/g, '');
+            const expected2clean = expected2.replace(/\s+/g, '');
+            const step2OK = val2 === expected2clean || val2.includes(`${asFraction(ex.m)}x`) && val2.includes('=0');
+            
+            // Schritt 3 prüfen
+            const val3 = step3.value.trim().replace(/\s+/g, '');
+            const expected3clean = expected3.replace(/\s+/g, '');
+            const step3OK = val3 === expected3clean || (val3.includes(`${asFraction(ex.m)}x=`) && val3.includes(`${-ex.b}`));
+            
+            // Schritt 4 prüfen
+            const val4 = step4.value.trim().replace(/\s+/g, '');
+            const expected4clean = expected4.replace(/\s+/g, '');
+            const step4OK = val4 === expected4clean || (val4.includes('x=') && val4.includes('/'));
+            
+            // Schritt 5 prüfen
+            const val5 = step5.value.trim();
+            let step5OK = false;
+            if (ex.nullstelle !== null) {
+              step5OK = val5.includes(ex.nullstelle.toFixed(2)) || val5.includes(asFraction(ex.nullstelle));
+            } else {
+              step5OK = val5.toLowerCase().includes('keine') || val5.includes('unendlich');
+            }
+
+            // Visuelles Feedback für jeden Schritt
+            step1.style.borderColor = step1OK ? '#6FCF97' : '#EB5757';
+            step2.style.borderColor = step2OK ? '#6FCF97' : '#EB5757';
+            step3.style.borderColor = step3OK ? '#6FCF97' : '#EB5757';
+            step4.style.borderColor = step4OK ? '#6FCF97' : '#EB5757';
+            step5.style.borderColor = step5OK ? '#6FCF97' : '#EB5757';
+
+            if (step1OK && step2OK && step3OK && step4OK && step5OK) {
+              feedback.textContent = `✅ Alle Schritte korrekt! Nullstelle: x = ${ex.nullstelle?.toFixed(2) ?? 'keine'}`;
+              feedback.className = 'feedback success';
+            } else {
+              const wrongSteps = [];
+              if (!step1OK) wrongSteps.push('1');
+              if (!step2OK) wrongSteps.push('2');
+              if (!step3OK) wrongSteps.push('3');
+              if (!step4OK) wrongSteps.push('4');
+              if (!step5OK) wrongSteps.push('5');
+              feedback.textContent = `❌ Schritt(e) ${wrongSteps.join(', ')} nicht korrekt. Jeden Umformungsschritt genau ausfüllen.`;
+              feedback.className = 'feedback error';
+            }
+          });
+        }
+      }
+    }
+
+    // Initialer Render
+    render();
+  })();
 </script>
 </body>
 </html>

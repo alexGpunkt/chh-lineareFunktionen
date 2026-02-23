@@ -156,13 +156,63 @@
       padding: 0.3rem;
       border: 1px solid var(--border);
       margin-bottom: 1rem;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 300px; /* Feste Höhe für bessere Bedienbarkeit */
+      cursor: crosshair;
     }
 
-    svg {
-      display: block;
+    .zoomable-svg {
       width: 100%;
-      height: auto;
-      border-radius: 8px;
+      height: 100%;
+      transition: transform 0.1s ease;
+      transform-origin: 0 0;
+    }
+
+    .zoomable-svg svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: visible;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .zoom-btn {
+      background: rgba(90, 190, 255, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 0.5rem 1.2rem;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 60px;
+      justify-content: center;
+    }
+
+    .zoom-btn:active {
+      background: rgba(90, 190, 255, 0.4);
+    }
+
+    .zoom-level {
+      background: rgba(90, 190, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 0.5rem 1.2rem;
+      color: var(--accent);
+      font-size: 0.9rem;
+      min-width: 80px;
+      text-align: center;
     }
 
     /* Funktionsinfos */
@@ -195,33 +245,37 @@
       gap: 1rem;
     }
 
-    .book-card {
+    /* QR-Code Container */
+    .qr-container {
       background: var(--card-bg);
       border-radius: var(--radius);
       padding: 1rem;
       border: 1px solid var(--border);
+      text-align: center;
     }
 
-    .book-card h3 {
+    .qr-container h3 {
       color: var(--accent);
       margin-bottom: 0.8rem;
       font-size: 1rem;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.3rem;
     }
 
-    .book-image {
-      width: 100%;
-      border-radius: var(--radius-sm);
-      border: 2px solid var(--border);
-      background: #05070c;
-      padding: 0.3rem;
+    .qr-code {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto;
+      background: white;
+      padding: 10px;
+      border-radius: 20px;
     }
 
-    .book-image svg {
+    .qr-code svg {
       width: 100%;
-      height: auto;
+      height: 100%;
     }
 
     .exercise-card {
@@ -388,6 +442,10 @@
       .chip {
         font-size: 0.8rem;
       }
+      
+      .svg-container {
+        height: 250px;
+      }
     }
   </style>
 </head>
@@ -432,32 +490,58 @@
 <script>
   (function() {
     // =====================================================
-    // GLOBAL STATE (erweitert)
+    // QR CODE GENERATOR
+    // =====================================================
+    function generateQRCode() {
+      const url = window.location.href;
+      // Einfacher QR-Code als SVG (für Demo-Zwecke)
+      return `<svg viewBox="0 0 100 100" width="100" height="100">
+        <rect width="100" height="100" fill="white"/>
+        <!-- Simulierter QR-Code -->
+        <rect x="10" y="10" width="15" height="15" fill="black"/>
+        <rect x="30" y="10" width="15" height="15" fill="black"/>
+        <rect x="50" y="10" width="15" height="15" fill="black"/>
+        <rect x="70" y="10" width="15" height="15" fill="black"/>
+        <rect x="10" y="30" width="15" height="15" fill="black"/>
+        <rect x="30" y="30" width="15" height="15" fill="black"/>
+        <rect x="50" y="30" width="15" height="15" fill="black"/>
+        <rect x="70" y="30" width="15" height="15" fill="black"/>
+        <rect x="10" y="50" width="15" height="15" fill="black"/>
+        <rect x="30" y="50" width="15" height="15" fill="black"/>
+        <rect x="50" y="50" width="15" height="15" fill="black"/>
+        <rect x="70" y="50" width="15" height="15" fill="black"/>
+        <rect x="10" y="70" width="15" height="15" fill="black"/>
+        <rect x="30" y="70" width="15" height="15" fill="black"/>
+        <rect x="50" y="70" width="15" height="15" fill="black"/>
+        <rect x="70" y="70" width="15" height="15" fill="black"/>
+      </svg>`;
+    }
+
+    // =====================================================
+    // GLOBAL STATE
     // =====================================================
     let currentSection = 'coords';
     let currentExample = null;
-    let currentLevel = 'standard'; // Neu: für Differenzierung
+    let currentLevel = 'standard';
+    
+    // Für Zoom-Funktion
+    let zoomLevel = 1;
+    const MIN_ZOOM = 0.3;
+    const MAX_ZOOM = 3;
 
     // =====================================================
-    // HILFSFUNKTIONEN (original + erweitert)
+    // HILFSFUNKTIONEN
     // =====================================================
-    
-    // Original rand-Funktion (beibehalten)
-    const randOriginal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    
-    // Erweiterte rand-Funktion mit Level-Unterstützung
     function rand(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Level-abhängigen Bereich holen
     function getRange() {
       if (currentLevel === 'basic') return 4;
       if (currentLevel === 'advanced') return 10;
-      return 6; // standard
+      return 6;
     }
 
-    // Erweiterte randomSlope mit Level-Differenzierung
     function randomSlope() {
       let m;
       const range = getRange();
@@ -473,7 +557,6 @@
       return m;
     }
 
-    // Verbesserte asFraction mit Brucherkennung (originale Version)
     function asFraction(m) {
       if (Number.isInteger(m)) return m.toString();
       const eps = 0.001;
@@ -491,7 +574,7 @@
     }
 
     // =====================================================
-    // EXAMPLE GENERATION (erweitert mit Level)
+    // EXAMPLE GENERATION
     // =====================================================
     function generateExample(section) {
       const range = getRange();
@@ -549,7 +632,7 @@
     }
 
     // =====================================================
-    // PDF EXPORT (erweiterte Version mit Niveau und Shuffle)
+    // PDF EXPORT (ohne Koordinatensysteme)
     // =====================================================
     async function exportPDF() {
       const { jsPDF } = window.jspdf;
@@ -560,7 +643,6 @@
 
       doc.setFontSize(11);
       
-      // Niveau anzeigen
       let levelText = "Standard";
       if (currentLevel === 'basic') levelText = "Basis";
       if (currentLevel === 'advanced') levelText = "Erweitert";
@@ -579,31 +661,46 @@
         y += 8;
 
         if (sec === 'coords') {
-          doc.text("Bestimme die Koordinaten des Punktes.", 25, y);
+          doc.text("Gib die Koordinaten des Punktes ein.", 25, y);
+          y += 6;
+          doc.text("Punkt: ( ___ | ___ )", 30, y);
           solutions.push(`(${ex.target.x}|${ex.target.y})`);
         }
 
         if (sec === 'table') {
-          doc.text(`Vervollständige die Tabelle zu y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, 25, y);
+          doc.text(`Vervollständige die Wertetabelle zu y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}.`, 25, y);
+          y += 6;
+          doc.text("x | -2 | -1 | 0 | 1 | 2", 30, y);
+          y += 6;
+          doc.text("y | __ | __ | __ | __ | __", 30, y);
           solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
         }
 
         if (sec === 'normalform') {
-          doc.text("Bestimme m und b aus dem Graphen.", 25, y);
+          doc.text("Bestimme m und b aus der Funktionsgleichung.", 25, y);
+          y += 6;
+          doc.text("m = _______, b = _______", 30, y);
           solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
         }
 
         if (sec === 'parallel') {
-          doc.text(`Parallel & Senkrecht durch P(${ex.P.x}|${ex.P.y})`, 25, y);
+          doc.text(`Bestimme die parallele und senkrechte Gerade durch P(${ex.P.x}|${ex.P.y})`, 25, y);
+          y += 6;
+          doc.text("Parallel:   y = ______ x + ______", 30, y);
+          y += 6;
+          doc.text("Senkrecht: y = ______ x + ______", 30, y);
           solutions.push(`Parallel: y = ${asFraction(ex.m)}x ${ex.bPar >= 0 ? '+' : '-'} ${Math.abs(ex.bPar)}`);
+          solutions.push(`Senkrecht: y = ${asFraction(ex.mPerp)}x ${ex.bPerp >= 0 ? '+' : '-'} ${Math.abs(ex.bPerp)}`);
         }
 
         if (sec === 'nullstellen') {
-          doc.text(`Bestimme die Nullstelle von y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, 25, y);
+          doc.text(`Bestimme die Nullstelle von y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}.`, 25, y);
+          y += 6;
+          doc.text("Nullstelle: x = _______", 30, y);
           solutions.push(`x = ${asFraction(ex.nullstelle)}`);
         }
 
-        y += 20;
+        y += 15;
         if (y > 260) {
           doc.addPage();
           y = 30;
@@ -616,26 +713,18 @@
 
       solutions.forEach((s, i) => {
         doc.text((i + 1) + ". " + s, 20, y);
-        y += 10;
+        y += 8;
       });
 
       doc.save("Arbeitsblatt_Lineare_Funktionen.pdf");
     }
 
     // =====================================================
-    // NULLSTELLEN – mathematische Prüfung (neu)
+    // KOORDINATENSYSTEM SVG
     // =====================================================
-    function checkNullstelleInput(inputValue, m, b) {
-      const val = parseFloat(inputValue.replace(',', '.'));
-      if (isNaN(val)) return false;
-      return Math.abs(m * val + b) < 0.01;
-    }
-
-    // =====================================================
-    // KOORDINATENSYSTEM SVG (original)
-    // =====================================================
-    function renderSVG(m, b, points = [], highlightPoint = null, drawTriangle = false, P = null, nullstelle = null) {
-      const xMin = -6, xMax = 6, yMin = -6, yMax = 6;
+    function renderSVG(m, b, points = [], highlightPoint = null, drawTriangle = false, P = null, nullstelle = null, hideTarget = false) {
+      // Bereich für das Koordinatensystem
+      const xMin = -8, xMax = 8, yMin = -8, yMax = 8;
       const viewBox = `${xMin} ${-yMax} ${xMax - xMin} ${yMax - yMin}`;
 
       let grid = '';
@@ -645,8 +734,26 @@
       for (let y = yMin; y <= yMax; y++) {
         grid += `<line x1="${xMin}" y1="${-y}" x2="${xMax}" y2="${-y}" stroke="#2A3450" stroke-width="0.05" />`;
       }
-      grid += `<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5ABFFF" stroke-width="0.1" />`;
-      grid += `<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5ABFFF" stroke-width="0.1" />`;
+      
+      // Achsen mit Beschriftung
+      grid += `<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5ABFFF" stroke-width="0.12" />`;
+      grid += `<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5ABFFF" stroke-width="0.12" />`;
+      
+      // Achsenbeschriftungen
+      grid += `<text x="${xMax - 0.4}" y="0.5" fill="#5ABFFF" font-size="0.5" font-weight="bold">x</text>`;
+      grid += `<text x="0.4" y="${-yMax + 0.6}" fill="#5ABFFF" font-size="0.5" font-weight="bold">y</text>`;
+      
+      // Zahlen an den Achsen
+      for (let x = -7; x <= 7; x++) {
+        if (x !== 0 && Math.abs(x) <= 7) {
+          grid += `<text x="${x - 0.15}" y="-0.3" fill="#A5B3D9" font-size="0.4">${x}</text>`;
+        }
+      }
+      for (let y = -7; y <= 7; y++) {
+        if (y !== 0 && Math.abs(y) <= 7) {
+          grid += `<text x="0.2" y="${-y + 0.2}" fill="#A5B3D9" font-size="0.4">${y}</text>`;
+        }
+      }
 
       let pointsSvg = '';
       if (points && points.length) {
@@ -660,9 +767,15 @@
       const line = `<line x1="${xMin}" y1="${-y1}" x2="${xMax}" y2="${-y2}" stroke="#5ABFFF" stroke-width="0.15" />`;
 
       let highlight = '';
-      if (highlightPoint) {
-        highlight += `<circle cx="${highlightPoint.x}" cy="${-highlightPoint.y}" r="0.3" fill="#EB5757" />`;
+      
+      // Referenzpunkt (rot) wird NUR angezeigt, wenn hideTarget = false
+      // In Aufgabe 1 ist hideTarget = true, also wird der rote Punkt NICHT angezeigt
+      if (!hideTarget) {
+        if (highlightPoint) {
+          highlight += `<circle cx="${highlightPoint.x}" cy="${-highlightPoint.y}" r="0.3" fill="#EB5757" />`;
+        }
       }
+      
       if (P) {
         highlight += `<circle cx="${P.x}" cy="${-P.y}" r="0.3" fill="#EB5757" />`;
       }
@@ -671,22 +784,24 @@
         const y0 = 0;
         if (x0 >= xMin && x0 <= xMax) {
           highlight += `<circle cx="${x0}" cy="${-y0}" r="0.35" fill="#EB5757" />`;
-          highlight += `<text x="${x0 + 0.3}" y="${-0.3}" fill="#EB5757" font-size="0.5">N</text>`;
+          highlight += `<text x="${x0 + 0.4}" y="${-0.4}" fill="#EB5757" font-size="0.5">N</text>`;
         }
       }
 
       let triangle = '';
       if (drawTriangle && m !== 0) {
-        const run = 1;
+        const run = 2;
         const rise = m * run;
         const startX = 0, startY = b;
         const endX = startX + run, endY = startY + rise;
-        triangle = `
-          <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
-          <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
-          <text x="${(startX + endX) / 2}" y="${-startY + 0.4}" fill="#A5B3D9" font-size="0.4">1</text>
-          <text x="${endX + 0.3}" y="${-(startY + rise / 2)}" fill="#A5B3D9" font-size="0.4">${asFraction(m)}</text>
-        `;
+        if (Math.abs(endX) <= 7 && Math.abs(endY) <= 7) {
+          triangle = `
+            <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+            <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
+            <text x="${(startX + endX) / 2}" y="${-startY + 0.5}" fill="#A5B3D9" font-size="0.45">${run}</text>
+            <text x="${endX + 0.4}" y="${-(startY + rise / 2)}" fill="#A5B3D9" font-size="0.45">${asFraction(m * run)}</text>
+          `;
+        }
       }
 
       return `
@@ -701,20 +816,160 @@
     }
 
     // =====================================================
-    // BUCH-SVG (original)
+    // ZOOM-FUNKTION
     // =====================================================
-    function bookSVG(type) {
-      if (type === 'coords') {
-        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><circle cx="30" cy="30" r="3" fill="#FFB347"/><circle cx="70" cy="20" r="3" fill="#FFB347"/><line x1="10" y1="30" x2="90" y2="30" stroke="#5ABFFF" stroke-width="1.5"/><line x1="50" y1="10" x2="50" y2="50" stroke="#5ABFFF" stroke-width="1.5"/></svg>`;
-      } else if (type === 'table') {
-        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="5" y1="20" x2="95" y2="20" stroke="#5ABFFF"/><line x1="35" y1="5" x2="35" y2="55" stroke="#5ABFFF"/><line x1="65" y1="5" x2="65" y2="55" stroke="#5ABFFF"/><text x="20" y="40" fill="white" font-size="6">x</text><text x="50" y="40" fill="white" font-size="6">y</text><text x="80" y="40" fill="white" font-size="6">y=mx+b</text></svg>`;
-      } else if (type === 'normal') {
-        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="45" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><circle cx="20" cy="40" r="2.5" fill="#FFB347"/><circle cx="45" cy="27.5" r="2.5" fill="#FFB347"/><text x="20" y="15" fill="white" font-size="5">m = rise/run</text></svg>`;
-      } else if (type === 'parallel') {
-        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="10" y1="40" x2="90" y2="10" stroke="#5ABFFF" stroke-width="2"/><line x1="10" y1="45" x2="90" y2="15" stroke="#EB5757" stroke-width="2"/><circle cx="50" cy="27" r="3" fill="#EB5757"/></svg>`;
-      } else {
-        return `<svg viewBox="0 0 100 60"><rect x="5" y="5" width="90" height="50" fill="#1E2639" rx="8" /><line x1="15" y1="45" x2="85" y2="15" stroke="#5ABFFF" stroke-width="2"/><circle cx="50" cy="30" r="3" fill="#EB5757"/><text x="45" y="20" fill="white" font-size="5">N</text><text x="20" y="20" fill="white" font-size="4">f(x)=0</text></svg>`;
+    function setupZoomableSVG(container, svgElement) {
+      if (!container || !svgElement) return;
+      
+      // Zoom-Level zurücksetzen
+      zoomLevel = 1;
+      
+      // Container für das SVG erstellen
+      const wrapper = document.createElement('div');
+      wrapper.className = 'zoomable-svg';
+      
+      // SVG in den Wrapper verschieben
+      svgElement.parentNode.insertBefore(wrapper, svgElement);
+      wrapper.appendChild(svgElement);
+      
+      // Transform zurücksetzen
+      wrapper.style.transform = `scale(${zoomLevel})`;
+      
+      // Zoom mit Mausrad
+      wrapper.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        zoomLevel *= delta;
+        zoomLevel = Math.min(Math.max(zoomLevel, MIN_ZOOM), MAX_ZOOM);
+        wrapper.style.transform = `scale(${zoomLevel})`;
+        updateZoomDisplay();
+      });
+      
+      // Steuerungs-Buttons
+      const controls = document.createElement('div');
+      controls.className = 'zoom-controls';
+      controls.innerHTML = `
+        <button class="zoom-btn" id="zoomOut">−</button>
+        <span class="zoom-level" id="zoomDisplay">100%</span>
+        <button class="zoom-btn" id="zoomIn">+</button>
+        <button class="zoom-btn" id="zoomReset">↺</button>
+      `;
+      
+      container.appendChild(controls);
+      
+      // Zoom-Buttons
+      document.getElementById('zoomIn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomLevel *= 1.2;
+        zoomLevel = Math.min(zoomLevel, MAX_ZOOM);
+        wrapper.style.transform = `scale(${zoomLevel})`;
+        updateZoomDisplay();
+      });
+      
+      document.getElementById('zoomOut').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomLevel *= 0.8;
+        zoomLevel = Math.max(zoomLevel, MIN_ZOOM);
+        wrapper.style.transform = `scale(${zoomLevel})`;
+        updateZoomDisplay();
+      });
+      
+      document.getElementById('zoomReset').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomLevel = 1;
+        wrapper.style.transform = `scale(1)`;
+        updateZoomDisplay();
+      });
+      
+      function updateZoomDisplay() {
+        const display = document.getElementById('zoomDisplay');
+        if (display) {
+          display.textContent = Math.round(zoomLevel * 100) + '%';
+        }
       }
+    }
+
+    // =====================================================
+    // KLICK-FUNKTION FÜR KOORDINATEN-ÜBUNG (KORRIGIERT)
+    // =====================================================
+    function setupCoordsClick(svg, ex, feedback) {
+      if (!svg) return;
+      
+      svg.style.cursor = "crosshair";
+      
+      // Alte Event-Listener entfernen
+      if (svg._clickHandler) {
+        svg.removeEventListener('click', svg._clickHandler);
+      }
+      
+      const handleClick = (e) => {
+        // Mausposition im Fenster
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        
+        // SVG-Element und seine Position
+        const svgRect = svg.getBoundingClientRect();
+        
+        // Zoom-Level
+        const zoom = zoomLevel;
+        
+        // Relative Position im SVG (0-1) mit Zoom-Korrektur
+        const relX = (clientX - svgRect.left) / (svgRect.width / zoom);
+        const relY = (clientY - svgRect.top) / (svgRect.height / zoom);
+        
+        // ViewBox des SVGs
+        const viewBox = svg.viewBox.baseVal;
+        const viewBoxWidth = viewBox.width;
+        const viewBoxHeight = viewBox.height;
+        
+        // Absolute Koordinaten im ViewBox-System
+        // WICHTIG: Die Y-Achse ist im SVG gespiegelt (negativ)
+        const x = viewBox.x + relX * viewBoxWidth;
+        const y = -(viewBox.y + relY * viewBoxHeight - viewBoxHeight);
+        
+        // Auf nächste ganze Zahl runden (Gitterpunkte)
+        const gridX = Math.round(x);
+        const gridY = Math.round(y);
+        
+        console.log('Klick:', {x, y, gridX, gridY, target: ex.target});
+        
+        // Prüfen ob innerhalb des sichtbaren Bereichs
+        const range = getRange() + 2;
+        if (gridX >= -range && gridX <= range && gridY >= -range && gridY <= range) {
+          // Alten Punkt entfernen
+          const oldPoint = svg.querySelector('#user-point');
+          if (oldPoint) oldPoint.remove();
+          
+          // Neuen Punkt zeichnen
+          const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          point.id = "user-point";
+          point.setAttribute("cx", gridX);
+          point.setAttribute("cy", -gridY);
+          point.setAttribute("r", "0.35");
+          point.setAttribute("fill", "#FFD966");
+          point.setAttribute("stroke", "white");
+          point.setAttribute("stroke-width", "0.05");
+          svg.appendChild(point);
+          
+          // Prüfen ob richtig
+          if (gridX === ex.target.x && gridY === ex.target.y) {
+            feedback.textContent = '✅ Richtig! Punkt getroffen.';
+            feedback.className = 'feedback success';
+          } else {
+            feedback.textContent = `❌ Falsch. Du hast (${gridX}|${gridY}) angeklickt. Gesucht: (${ex.target.x}|${ex.target.y})`;
+            feedback.className = 'feedback error';
+          }
+        } else {
+          feedback.textContent = `⚠️ Außerhalb des sichtbaren Bereichs. Zoome heraus oder wähle einen Punkt zwischen -${range} und ${range}.`;
+          feedback.className = 'feedback';
+        }
+      };
+      
+      svg.addEventListener('click', handleClick);
+      svg._clickHandler = handleClick;
     }
 
     // =====================================================
@@ -726,7 +981,7 @@
       levelSelect.innerHTML = `
         <option value="basic">🟢 Basis (Zahlen -4 bis 4)</option>
         <option value="standard" selected>🟡 Standard (Zahlen -6 bis 6)</option>
-        <option value="advanced">🔴 Erweitert (mit Brüchen)</option>
+        <option value="advanced">🔴 Erweitert (Zahlen -10 bis 10)</option>
       `;
 
       const mainContent = document.querySelector(".main-content");
@@ -742,7 +997,7 @@
     }
 
     // =====================================================
-    // RENDER (original, aber mit currentLevel)
+    // RENDER
     // =====================================================
     function render() {
       const panel = document.getElementById('mainPanel');
@@ -755,7 +1010,8 @@
 
       if (section === 'coords') {
         graphTitle = '📍 Punkt finden';
-        graphSVG = renderSVG(0, 0, [], ex.target);
+        // hideTarget = true für Aufgabe 1 - der rote Punkt wird NICHT angezeigt
+        graphSVG = renderSVG(0, 0, [], ex.target, false, null, null, true);
         funcChips = `<div class="chip"><i>Gesucht:</i> (${ex.target.x} | ${ex.target.y})</div>`;
       } else if (section === 'table') {
         graphTitle = '📊 Wertetabelle → Graph';
@@ -775,7 +1031,6 @@
         funcChips = `<div class="chip"><i>f(x) =</i> ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}</div>`;
       }
 
-      let bookType = section;
       let exerciseHTML = '';
 
       if (section === 'coords') {
@@ -783,13 +1038,16 @@
           <div class="exercise-card">
             <div class="exercise-title"><span>🎯</span> Klick-Übung</div>
             <div class="input-group">
-              <input type="text" id="coordsAnswer" placeholder="x, y (z.B. 2,-3)" style="padding:0.8rem;">
+              <div class="step-row">
+                <span class="step-label">Klicke direkt auf den gesuchten Punkt im Koordinatensystem</span>
+                <span class="step-hint">Der rote Punkt dient als Referenz und wird nicht angezeigt</span>
+                <span class="step-hint">Bei Bedarf kannst du mit den Buttons zoomen</span>
+              </div>
             </div>
             <div class="button-group">
-              <button class="btn" id="coordsCheckBtn">🖱️ Prüfen</button>
               <button class="btn btn-primary" id="newExampleBtn">✨ Neu</button>
             </div>
-            <div class="feedback" id="coordsFeedback">Gib die Koordinaten des roten Punkts ein.</div>
+            <div class="feedback" id="coordsFeedback">Klicke auf den Punkt (${ex.target.x}|${ex.target.y}).</div>
           </div>
         `;
       } else if (section === 'table') {
@@ -899,7 +1157,7 @@
           <div class="graph-title">
             <span>${graphTitle}</span>
           </div>
-          <div class="svg-container">
+          <div class="svg-container" id="svgContainer">
             ${graphSVG}
           </div>
           <div class="func-info">
@@ -907,10 +1165,10 @@
           </div>
         </div>
         <div class="exercise-area">
-          <div class="book-card">
-            <h3><span>📖</span> Buchvorlage</h3>
-            <div class="book-image">
-              ${bookSVG(bookType)}
+          <div class="qr-container">
+            <h3><span>📱</span> QR-Code</h3>
+            <div class="qr-code">
+              ${generateQRCode()}
             </div>
           </div>
           ${exerciseHTML}
@@ -923,18 +1181,28 @@
         if (btn.dataset.section === currentSection) btn.classList.add('active');
       });
 
-      // Event-Listener
+      // SVG zoomfähig machen
+      const container = document.getElementById('svgContainer');
+      const svg = container.querySelector('svg');
+      if (svg) {
+        setupZoomableSVG(container, svg);
+      }
+
+      // Event-Listener für "Neu" Buttons
       document.querySelectorAll('#newExampleBtn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
+          e.stopPropagation();
           currentExample = generateExample(currentSection);
           render();
         });
       });
 
+      // Navigation-Buttons
       document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
+          e.stopPropagation();
           currentSection = e.currentTarget.dataset.section;
           currentExample = generateExample(currentSection);
           render();
@@ -943,27 +1211,10 @@
 
       // Abschnitts-spezifische Prüfungen
       if (section === 'coords') {
-        const checkBtn = document.getElementById('coordsCheckBtn');
-        const input = document.getElementById('coordsAnswer');
+        const svg = document.querySelector('#svgContainer svg');
         const feedback = document.getElementById('coordsFeedback');
-        if (checkBtn) {
-          checkBtn.addEventListener('click', () => {
-            const val = input.value.trim();
-            const parts = val.split(',').map(Number);
-            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-              const [x, y] = parts;
-              if (x === ex.target.x && y === ex.target.y) {
-                feedback.textContent = '✅ Richtig! Punkt getroffen.';
-                feedback.className = 'feedback success';
-              } else {
-                feedback.textContent = `❌ Falsch. Gesucht: (${ex.target.x}|${ex.target.y})`;
-                feedback.className = 'feedback error';
-              }
-            } else {
-              feedback.textContent = '❌ Format: x,y (z.B. 2,-3)';
-              feedback.className = 'feedback error';
-            }
-          });
+        if (svg && feedback) {
+          setupCoordsClick(svg, ex, feedback);
         }
       }
 
@@ -971,7 +1222,9 @@
         const checkBtn = document.getElementById('tableCheckBtn');
         const feedback = document.getElementById('tableFeedback');
         if (checkBtn) {
-          checkBtn.addEventListener('click', () => {
+          checkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             let allCorrect = true;
             for (let i = 0; i < ex.xs.length; i++) {
               const inp = document.getElementById(`tableInput${i}`);
@@ -1002,7 +1255,9 @@
         const bInp = document.getElementById('normalB');
         const feedback = document.getElementById('normalFeedback');
         if (checkBtn) {
-          checkBtn.addEventListener('click', () => {
+          checkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const mVal = parseFloat(mInp.value.replace(',', '.'));
             const bVal = parseFloat(bInp.value.replace(',', '.'));
             if (!isNaN(mVal) && !isNaN(bVal) && Math.abs(mVal - ex.m) < 0.01 && Math.abs(bVal - ex.b) < 0.01) {
@@ -1025,7 +1280,10 @@
         const step4 = document.getElementById('parallelStep4');
 
         if (checkBtn) {
-          checkBtn.addEventListener('click', () => {
+          checkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const expected1 = asFraction(ex.m);
             const expected2 = asFraction(ex.bPar);
             const expected3 = asFraction(ex.mPerp);
@@ -1072,7 +1330,10 @@
         const step5 = document.getElementById('step5');
 
         if (checkBtn) {
-          checkBtn.addEventListener('click', () => {
+          checkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const expected1 = '0';
             const expected2 = `${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)} = 0`;
             const expected3 = `${asFraction(ex.m)}x = ${-ex.b}`;
@@ -1130,7 +1391,10 @@
       // PDF-Button Event-Listener
       const pdfBtn = document.getElementById('pdfExportBtn');
       if (pdfBtn) {
-        pdfBtn.addEventListener('click', exportPDF);
+        pdfBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          exportPDF();
+        });
       }
 
       // Initiales Beispiel generieren

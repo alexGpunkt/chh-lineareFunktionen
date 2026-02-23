@@ -6,6 +6,8 @@
   <title>📐 Lineare Funktionen • mobil mit PDF</title>
   <!-- jsPDF für PDF-Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QR-Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -48,20 +50,87 @@
       flex-direction: column;
     }
 
-    /* Mobile Navigation – als Scroll-Leiste unten */
-    .mobile-nav {
+    /* App-Header mit Titel */
+    .app-header {
       position: fixed;
-      bottom: 0;
+      top: 0;
       left: 0;
       right: 0;
-      background: rgba(10, 15, 25, 0.95);
+      background: rgba(10, 15, 25, 0.97);
       backdrop-filter: blur(12px);
-      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      z-index: 101;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .app-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem 0.3rem 1rem;
+    }
+
+    .app-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    .qr-btn {
+      background: rgba(90, 190, 255, 0.15);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.3rem 0.7rem;
+      color: var(--accent);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .qr-btn:active { background: rgba(90, 190, 255, 0.3); }
+
+    /* QR-Modal */
+    .qr-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-modal.open { display: flex; }
+    .qr-modal-inner {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      max-width: 90vw;
+    }
+    .qr-modal-inner h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1rem; }
+    .qr-modal-inner canvas { border-radius: 12px; background: white; padding: 8px; }
+    .qr-url { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.8rem; word-break: break-all; }
+    .qr-close {
+      margin-top: 1rem;
+      background: rgba(90,190,255,0.2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.5rem 1.5rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    /* Mobile Navigation – oben unter dem Titel */
+    .mobile-nav {
       display: flex;
       justify-content: space-around;
-      padding: 0.5rem 0.25rem;
-      z-index: 100;
-      box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+      padding: 0.3rem 0.25rem 0.5rem 0.25rem;
+      border-top: 1px solid rgba(90,190,255,0.08);
     }
 
     .nav-item {
@@ -110,11 +179,12 @@
       max-width: 300px;
     }
 
-    /* Hauptinhalt – mit Padding unten für Navigation */
+    /* Hauptinhalt – mit Padding oben für fixed Header */
     .main-content {
       flex: 1;
-      padding: 1rem 1rem 5rem 1rem;
+      padding: 1rem 1rem 1.5rem 1rem;
       overflow-y: auto;
+      margin-top: var(--header-height, 120px);
     }
 
     /* Hauptbereich – vertikale Anordnung für mobile */
@@ -159,7 +229,7 @@
       overflow: hidden;
       position: relative;
       width: 100%;
-      height: 300px; /* Feste Höhe für bessere Bedienbarkeit */
+      height: 300px;
       cursor: crosshair;
     }
 
@@ -243,39 +313,6 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
-    }
-
-    /* QR-Code Container */
-    .qr-container {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 1rem;
-      border: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .qr-container h3 {
-      color: var(--accent);
-      margin-bottom: 0.8rem;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.3rem;
-    }
-
-    .qr-code {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto;
-      background: white;
-      padding: 10px;
-      border-radius: 20px;
-    }
-
-    .qr-code svg {
-      width: 100%;
-      height: 100%;
     }
 
     .exercise-card {
@@ -430,7 +467,7 @@
     /* Portrait-optimiert */
     @media (max-width: 480px) {
       .main-content {
-        padding: 0.8rem 0.8rem 5rem 0.8rem;
+        padding: 0.8rem 0.8rem 1.5rem 0.8rem;
       }
       
       .btn {
@@ -450,33 +487,49 @@
   </style>
 </head>
 <body>
+<!-- QR-Code-Modal -->
+<div class="qr-modal" id="qrModal">
+  <div class="qr-modal-inner">
+    <h3>📱 QR-Code zur App</h3>
+    <canvas id="qrCanvas"></canvas>
+    <div class="qr-url" id="qrUrl"></div>
+    <button class="qr-close" id="qrClose">✕ Schließen</button>
+  </div>
+</div>
+
 <div class="app">
-  <!-- Mobile Navigation (unten) mit PDF-Button -->
-  <div class="mobile-nav" id="mobileNav">
-    <button class="nav-item active" data-section="coords">
-      <span>📌</span>
-      <span>Punkte</span>
-    </button>
-    <button class="nav-item" data-section="table">
-      <span>📊</span>
-      <span>Tabelle</span>
-    </button>
-    <button class="nav-item" data-section="normalform">
-      <span>📈</span>
-      <span>m & b</span>
-    </button>
-    <button class="nav-item" data-section="parallel">
-      <span>⚡</span>
-      <span>Parallel</span>
-    </button>
-    <button class="nav-item" data-section="nullstellen">
-      <span>❌</span>
-      <span>Nullstellen</span>
-    </button>
-    <button class="nav-item" id="pdfExportBtn">
-      <span>📄</span>
-      <span>PDF</span>
-    </button>
+  <!-- Fixer Header: Titel + Navigation -->
+  <div class="app-header" id="appHeader">
+    <div class="app-title-bar">
+      <div class="app-title">📐 Lineare Funktionen</div>
+      <button class="qr-btn" id="qrBtn">📱 QR</button>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <button class="nav-item active" data-section="coords">
+        <span>📌</span>
+        <span>Punkte</span>
+      </button>
+      <button class="nav-item" data-section="table">
+        <span>📊</span>
+        <span>Tabelle</span>
+      </button>
+      <button class="nav-item" data-section="normalform">
+        <span>📈</span>
+        <span>m &amp; b</span>
+      </button>
+      <button class="nav-item" data-section="parallel">
+        <span>⚡</span>
+        <span>Parallel</span>
+      </button>
+      <button class="nav-item" data-section="nullstellen">
+        <span>❌</span>
+        <span>Nullstellen</span>
+      </button>
+      <button class="nav-item" id="pdfExportBtn">
+        <span>📄</span>
+        <span>PDF</span>
+      </button>
+    </div>
   </div>
 
   <!-- Hauptinhalt (scrollbar) -->
@@ -490,32 +543,9 @@
 <script>
   (function() {
     // =====================================================
-    // QR CODE GENERATOR
+    // QR CODE GENERATOR (ENTFERNT)
     // =====================================================
-    function generateQRCode() {
-      const url = window.location.href;
-      // Einfacher QR-Code als SVG (für Demo-Zwecke)
-      return `<svg viewBox="0 0 100 100" width="100" height="100">
-        <rect width="100" height="100" fill="white"/>
-        <!-- Simulierter QR-Code -->
-        <rect x="10" y="10" width="15" height="15" fill="black"/>
-        <rect x="30" y="10" width="15" height="15" fill="black"/>
-        <rect x="50" y="10" width="15" height="15" fill="black"/>
-        <rect x="70" y="10" width="15" height="15" fill="black"/>
-        <rect x="10" y="30" width="15" height="15" fill="black"/>
-        <rect x="30" y="30" width="15" height="15" fill="black"/>
-        <rect x="50" y="30" width="15" height="15" fill="black"/>
-        <rect x="70" y="30" width="15" height="15" fill="black"/>
-        <rect x="10" y="50" width="15" height="15" fill="black"/>
-        <rect x="30" y="50" width="15" height="15" fill="black"/>
-        <rect x="50" y="50" width="15" height="15" fill="black"/>
-        <rect x="70" y="50" width="15" height="15" fill="black"/>
-        <rect x="10" y="70" width="15" height="15" fill="black"/>
-        <rect x="30" y="70" width="15" height="15" fill="black"/>
-        <rect x="50" y="70" width="15" height="15" fill="black"/>
-        <rect x="70" y="70" width="15" height="15" fill="black"/>
-      </svg>`;
-    }
+    // QR-Code wurde komplett entfernt
 
     // =====================================================
     // GLOBAL STATE
@@ -580,10 +610,12 @@
       const range = getRange();
 
       if (section === 'coords') {
+        // Limit to -7..7 so it's always visible in the SVG
+        const visibleRange = Math.min(range, 7);
         return {
           target: {
-            x: rand(-range, range),
-            y: rand(-range, range)
+            x: rand(-visibleRange, visibleRange),
+            y: rand(-visibleRange, visibleRange)
           }
         };
       }
@@ -597,8 +629,14 @@
       }
 
       if (section === 'normalform') {
-        const m = randomSlope();
-        const b = rand(-range, range);
+        let m, b;
+        // Ensure the graph passes through the visible area well
+        // b should be limited so the line is visible near center
+        const bRange = Math.min(range, 5);
+        do {
+          m = randomSlope();
+          b = rand(-bRange, bRange);
+        } while (Math.abs(m * 0 + b) > 6); // y-intercept must be visible
         return { m, b };
       }
 
@@ -632,8 +670,130 @@
     }
 
     // =====================================================
-    // PDF EXPORT (ohne Koordinatensysteme)
+    // PDF EXPORT – mit Koordinatensystemen
     // =====================================================
+
+    // Zeichnet ein Koordinatensystem in jsPDF
+    function drawCoordSystem(doc, ox, oy, size, ex, sec) {
+      const S = size / 16; // Skalierung: 16 Einheiten (-8..8) auf 'size' mm
+      const cx = ox + size / 2; // Ursprung x in mm
+      const cy = oy + size / 2; // Ursprung y in mm
+
+      // Hintergrund
+      doc.setFillColor(240, 244, 255);
+      doc.rect(ox, oy, size, size, 'F');
+      doc.setDrawColor(200, 210, 230);
+      doc.setLineWidth(0.1);
+
+      // Gitterlinien
+      for (let i = -8; i <= 8; i++) {
+        const px = cx + i * S;
+        const py = cy + i * S;
+        doc.setDrawColor(200, 210, 230);
+        doc.setLineWidth(0.1);
+        doc.line(px, oy, px, oy + size);
+        doc.line(ox, py, ox + size, py);
+      }
+
+      // Achsen
+      doc.setDrawColor(80, 120, 200);
+      doc.setLineWidth(0.35);
+      doc.line(ox, cy, ox + size, cy); // x-Achse
+      doc.line(cx, oy, cx, oy + size); // y-Achse
+
+      // Achsenbeschriftung
+      doc.setFontSize(5);
+      doc.setTextColor(80, 120, 200);
+      doc.text('x', ox + size - 1.5, cy - 0.8);
+      doc.text('y', cx + 0.8, oy + 2);
+
+      // Zahlenbeschriftung
+      doc.setFontSize(3.5);
+      doc.setTextColor(100, 120, 160);
+      for (let i = -7; i <= 7; i++) {
+        if (i !== 0) {
+          doc.text(String(i), cx + i * S - (i < 0 ? 2.2 : 0.8), cy - 0.8);
+          doc.text(String(-i), cx + 0.8, cy + i * S + 1);
+        }
+      }
+
+      // Funktion zeichnen (Linie von x=-8 bis x=8)
+      if (sec !== 'coords') {
+        const m = ex.m, b = ex.b;
+        const x1 = -8, y1 = m * x1 + b;
+        const x2 = 8, y2 = m * x2 + b;
+        const px1 = cx + x1 * S, py1 = cy - y1 * S;
+        const px2 = cx + x2 * S, py2 = cy - y2 * S;
+        doc.setDrawColor(90, 150, 220);
+        doc.setLineWidth(0.5);
+        // Clip zur Systemgrenze
+        doc.line(
+          Math.max(ox, Math.min(ox + size, px1)),
+          Math.max(oy, Math.min(oy + size, py1)),
+          Math.max(ox, Math.min(ox + size, px2)),
+          Math.max(oy, Math.min(oy + size, py2))
+        );
+      }
+
+      // Punkt einzeichnen
+      if (sec === 'coords') {
+        const px = cx + ex.target.x * S;
+        const py = cy - ex.target.y * S;
+        doc.setFillColor(220, 60, 60);
+        doc.circle(px, py, 1.2, 'F');
+      }
+
+      // Nullstelle
+      if (sec === 'nullstellen' && ex.nullstelle !== null && Math.abs(ex.nullstelle) <= 8) {
+        const px = cx + ex.nullstelle * S;
+        doc.setFillColor(220, 60, 60);
+        doc.circle(px, cy, 1.2, 'F');
+        doc.setFontSize(4);
+        doc.setTextColor(220, 60, 60);
+        doc.text('N', px + 1.2, cy - 1);
+      }
+
+      // Steigungsdreieck bei normalform
+      if (sec === 'normalform' && Math.abs(ex.b) <= 6.5) {
+        const m = ex.m;
+        const startX = 0, startY = ex.b;
+        const run = Math.abs(m * 2 + ex.b) <= 6.5 ? 2 : 1;
+        const endX = startX + run, endY = startY + m * run;
+        if (Math.abs(endY) <= 7) {
+          const sx = cx + startX * S, sy = cy - startY * S;
+          const ex2 = cx + endX * S, ey = cy - endY * S;
+          doc.setDrawColor(255, 140, 50);
+          doc.setLineWidth(0.35);
+          doc.line(sx, sy, ex2, sy);
+          doc.line(ex2, sy, ex2, ey);
+          doc.setFontSize(4);
+          doc.setTextColor(255, 140, 50);
+          doc.text(String(run), (sx + ex2) / 2 - 1, sy + 2.5);
+          doc.text(asFraction(m * run), ex2 + 1, (sy + ey) / 2 + 1);
+        }
+      }
+
+      // Punkt P bei parallel
+      if (sec === 'parallel' && ex.P) {
+        const px = cx + ex.P.x * S;
+        const py = cy - ex.P.y * S;
+        doc.setFillColor(220, 60, 60);
+        doc.circle(px, py, 1.2, 'F');
+        doc.setFontSize(4);
+        doc.setTextColor(220, 60, 60);
+        doc.text(`P(${ex.P.x}|${ex.P.y})`, px + 1.5, py - 1);
+      }
+
+      // Rahmen
+      doc.setDrawColor(150, 180, 220);
+      doc.setLineWidth(0.3);
+      doc.rect(ox, oy, size, size);
+
+      // Farben zurücksetzen
+      doc.setTextColor(0, 0, 0);
+      doc.setDrawColor(0, 0, 0);
+    }
+
     async function exportPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -642,78 +802,115 @@
       doc.text("Arbeitsblatt – Lineare Funktionen", 20, 15);
 
       doc.setFontSize(11);
-      
       let levelText = "Standard";
       if (currentLevel === 'basic') levelText = "Basis";
       if (currentLevel === 'advanced') levelText = "Erweitert";
       doc.text("Niveau: " + levelText, 20, 22);
-      doc.text("Datum: ____________________", 140, 22);
+      doc.text("Datum: ____________________", 130, 22);
 
-      let y = 35;
+      let y = 32;
       const sections = shuffle(['coords', 'table', 'normalform', 'parallel', 'nullstellen']);
       const solutions = [];
 
       sections.forEach((sec, i) => {
         const ex = generateExample(sec);
 
+        // Neues Seite falls nötig
+        if (y > 220) { doc.addPage(); y = 20; }
+
         doc.setFontSize(12);
-        doc.text("Aufgabe " + (i + 1) + ":", 20, y);
-        y += 8;
+        doc.setFont(undefined, 'bold');
+        doc.text("Aufgabe " + (i + 1) + ":", 15, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        y += 7;
+
+        // Aufgabentext links, Koordinatensystem rechts
+        const csSize = 55; // mm
+        const csX = 145;   // rechts auf Seite
+        const textX = 15;
+        const textMaxW = 125;
 
         if (sec === 'coords') {
-          doc.text("Gib die Koordinaten des Punktes ein.", 25, y);
+          doc.text(`Klicke auf den Punkt (${ex.target.x}|${ex.target.y}) im Koordinatensystem.`, textX, y, { maxWidth: textMaxW });
           y += 6;
-          doc.text("Punkt: ( ___ | ___ )", 30, y);
-          solutions.push(`(${ex.target.x}|${ex.target.y})`);
+          doc.text("Der gesuchte Punkt ist rot markiert.", textX, y, { maxWidth: textMaxW });
+          drawCoordSystem(doc, csX, y - 10, csSize, ex, sec);
+          solutions.push(`Aufgabe ${i+1}: Punkt (${ex.target.x}|${ex.target.y})`);
+          y += csSize - 5;
         }
 
         if (sec === 'table') {
-          doc.text(`Vervollständige die Wertetabelle zu y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}.`, 25, y);
+          doc.text(`Vervollständige die Wertetabelle zu:`, textX, y, { maxWidth: textMaxW });
+          y += 5;
+          doc.text(`f(x) = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, textX + 5, y);
+          drawCoordSystem(doc, csX, y - 10, csSize, ex, sec);
           y += 6;
-          doc.text("x | -2 | -1 | 0 | 1 | 2", 30, y);
-          y += 6;
-          doc.text("y | __ | __ | __ | __ | __", 30, y);
-          solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
+          doc.text("x  | -2 | -1 |  0 |  1 |  2", textX + 5, y);
+          y += 5;
+          doc.text("y  | __ | __ | __ | __ | __", textX + 5, y);
+          solutions.push(`Aufgabe ${i+1}: y-Werte: ${ex.ys.map(v => Number.isInteger(v) ? v : v.toFixed(2)).join(' | ')}`);
+          y += csSize - 15;
         }
 
         if (sec === 'normalform') {
-          doc.text("Bestimme m und b aus der Funktionsgleichung.", 25, y);
+          doc.text("Bestimme Steigung m und Achsenabschnitt b", textX, y, { maxWidth: textMaxW });
+          y += 5;
+          doc.text("aus dem abgebildeten Graphen:", textX, y, { maxWidth: textMaxW });
+          drawCoordSystem(doc, csX, y - 10, csSize, ex, sec);
           y += 6;
-          doc.text("m = _______, b = _______", 30, y);
-          solutions.push(`m = ${asFraction(ex.m)}, b = ${ex.b}`);
+          doc.text("m = _______     b = _______", textX + 5, y);
+          solutions.push(`Aufgabe ${i+1}: m = ${asFraction(ex.m)}, b = ${ex.b}`);
+          y += csSize - 15;
         }
 
         if (sec === 'parallel') {
-          doc.text(`Bestimme die parallele und senkrechte Gerade durch P(${ex.P.x}|${ex.P.y})`, 25, y);
+          doc.text(`Bestimme Parallele und Senkrechte durch P(${ex.P.x}|${ex.P.y})`, textX, y, { maxWidth: textMaxW });
+          y += 5;
+          doc.text(`zur Geraden f(x) = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}:`, textX, y);
+          drawCoordSystem(doc, csX, y - 10, csSize, ex, sec);
           y += 6;
-          doc.text("Parallel:   y = ______ x + ______", 30, y);
-          y += 6;
-          doc.text("Senkrecht: y = ______ x + ______", 30, y);
-          solutions.push(`Parallel: y = ${asFraction(ex.m)}x ${ex.bPar >= 0 ? '+' : '-'} ${Math.abs(ex.bPar)}`);
-          solutions.push(`Senkrecht: y = ${asFraction(ex.mPerp)}x ${ex.bPerp >= 0 ? '+' : '-'} ${Math.abs(ex.bPerp)}`);
+          doc.text("Parallel:   y = ______ · x + ______", textX + 5, y);
+          y += 5;
+          doc.text("Senkrecht: y = ______ · x + ______", textX + 5, y);
+          solutions.push(`Aufgabe ${i+1}: Parallel: y = ${asFraction(ex.m)}x ${ex.bPar >= 0 ? '+' : '-'} ${Math.abs(ex.bPar)}`);
+          solutions.push(`           Senkrecht: y = ${asFraction(ex.mPerp)}x ${ex.bPerp >= 0 ? '+' : '-'} ${Math.abs(ex.bPerp)}`);
+          y += csSize - 15;
         }
 
         if (sec === 'nullstellen') {
-          doc.text(`Bestimme die Nullstelle von y = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}.`, 25, y);
+          doc.text(`Bestimme die Nullstelle von:`, textX, y, { maxWidth: textMaxW });
+          y += 5;
+          doc.text(`f(x) = ${asFraction(ex.m)}x ${ex.b >= 0 ? '+' : '-'} ${Math.abs(ex.b)}`, textX + 5, y);
+          drawCoordSystem(doc, csX, y - 10, csSize, ex, sec);
           y += 6;
-          doc.text("Nullstelle: x = _______", 30, y);
-          solutions.push(`x = ${asFraction(ex.nullstelle)}`);
+          doc.text("Rechenweg:", textX + 5, y); y += 5;
+          doc.text("0 = ________________________", textX + 5, y); y += 5;
+          doc.text("x = ________________________", textX + 5, y);
+          solutions.push(`Aufgabe ${i+1}: Nullstelle x = ${ex.nullstelle !== null ? asFraction(ex.nullstelle) : 'keine'}`);
+          y += csSize - 20;
         }
 
-        y += 15;
-        if (y > 260) {
-          doc.addPage();
-          y = 30;
+        y += 8;
+        // Trennlinie
+        if (i < sections.length - 1) {
+          doc.setDrawColor(200, 210, 230);
+          doc.setLineWidth(0.2);
+          doc.line(15, y - 4, 195, y - 4);
         }
       });
 
+      // Lösungsseite
       doc.addPage();
-      doc.text("Lösungen", 20, 20);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("Lösungen", 15, 20);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
       y = 30;
-
-      solutions.forEach((s, i) => {
-        doc.text((i + 1) + ". " + s, 20, y);
-        y += 8;
+      solutions.forEach((s) => {
+        doc.text(s, 15, y);
+        y += 7;
       });
 
       doc.save("Arbeitsblatt_Lineare_Funktionen.pdf");
@@ -723,7 +920,6 @@
     // KOORDINATENSYSTEM SVG
     // =====================================================
     function renderSVG(m, b, points = [], highlightPoint = null, drawTriangle = false, P = null, nullstelle = null, hideTarget = false) {
-      // Bereich für das Koordinatensystem
       const xMin = -8, xMax = 8, yMin = -8, yMax = 8;
       const viewBox = `${xMin} ${-yMax} ${xMax - xMin} ${yMax - yMin}`;
 
@@ -735,15 +931,12 @@
         grid += `<line x1="${xMin}" y1="${-y}" x2="${xMax}" y2="${-y}" stroke="#2A3450" stroke-width="0.05" />`;
       }
       
-      // Achsen mit Beschriftung
       grid += `<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5ABFFF" stroke-width="0.12" />`;
       grid += `<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5ABFFF" stroke-width="0.12" />`;
       
-      // Achsenbeschriftungen
       grid += `<text x="${xMax - 0.4}" y="0.5" fill="#5ABFFF" font-size="0.5" font-weight="bold">x</text>`;
       grid += `<text x="0.4" y="${-yMax + 0.6}" fill="#5ABFFF" font-size="0.5" font-weight="bold">y</text>`;
       
-      // Zahlen an den Achsen
       for (let x = -7; x <= 7; x++) {
         if (x !== 0 && Math.abs(x) <= 7) {
           grid += `<text x="${x - 0.15}" y="-0.3" fill="#A5B3D9" font-size="0.4">${x}</text>`;
@@ -768,8 +961,6 @@
 
       let highlight = '';
       
-      // Referenzpunkt (rot) wird NUR angezeigt, wenn hideTarget = false
-      // In Aufgabe 1 ist hideTarget = true, also wird der rote Punkt NICHT angezeigt
       if (!hideTarget) {
         if (highlightPoint) {
           highlight += `<circle cx="${highlightPoint.x}" cy="${-highlightPoint.y}" r="0.3" fill="#EB5757" />`;
@@ -790,17 +981,31 @@
 
       let triangle = '';
       if (drawTriangle && m !== 0) {
-        const run = 2;
-        const rise = m * run;
-        const startX = 0, startY = b;
-        const endX = startX + run, endY = startY + rise;
-        if (Math.abs(endX) <= 7 && Math.abs(endY) <= 7) {
-          triangle = `
-            <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
-            <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#A5B3D9" stroke-width="0.1" stroke-dasharray="0.2 0.2" />
-            <text x="${(startX + endX) / 2}" y="${-startY + 0.5}" fill="#A5B3D9" font-size="0.45">${run}</text>
-            <text x="${endX + 0.4}" y="${-(startY + rise / 2)}" fill="#A5B3D9" font-size="0.45">${asFraction(m * run)}</text>
-          `;
+        // Steigungsdreieck immer am y-Achsenabschnitt startend, nach rechts
+        // Wähle run=2 (oder 1 falls Platz knapp)
+        let run = 2;
+        const startX = 0;
+        const startY = b; // y-Achsenabschnitt
+        // Prüfe ob der y-Achsenabschnitt sichtbar ist
+        if (Math.abs(startY) <= 6.5) {
+          // Passe run an falls endY außerhalb wäre
+          let endX = startX + run;
+          let endY = startY + m * run;
+          if (Math.abs(endY) > 6.5 || endX > 6.5) {
+            run = 1;
+            endX = startX + run;
+            endY = startY + m * run;
+          }
+          if (endX <= 7 && Math.abs(endY) <= 7) {
+            const riseVal = m * run;
+            triangle = `
+              <circle cx="${startX}" cy="${-startY}" r="0.2" fill="#FFB347" opacity="0.8"/>
+              <line x1="${startX}" y1="${-startY}" x2="${endX}" y2="${-startY}" stroke="#FFB347" stroke-width="0.12" stroke-dasharray="0.2 0.2" />
+              <line x1="${endX}" y1="${-startY}" x2="${endX}" y2="${-endY}" stroke="#FFB347" stroke-width="0.12" stroke-dasharray="0.2 0.2" />
+              <text x="${(startX + endX) / 2}" y="${-startY + 0.6}" fill="#FFB347" font-size="0.45" text-anchor="middle">${run}</text>
+              <text x="${endX + 0.45}" y="${-(startY + riseVal / 2) + 0.15}" fill="#FFB347" font-size="0.45">${asFraction(riseVal)}</text>
+            `;
+          }
         }
       }
 
@@ -821,21 +1026,16 @@
     function setupZoomableSVG(container, svgElement) {
       if (!container || !svgElement) return;
       
-      // Zoom-Level zurücksetzen
       zoomLevel = 1;
       
-      // Container für das SVG erstellen
       const wrapper = document.createElement('div');
       wrapper.className = 'zoomable-svg';
       
-      // SVG in den Wrapper verschieben
       svgElement.parentNode.insertBefore(wrapper, svgElement);
       wrapper.appendChild(svgElement);
       
-      // Transform zurücksetzen
       wrapper.style.transform = `scale(${zoomLevel})`;
       
-      // Zoom mit Mausrad
       wrapper.addEventListener('wheel', (e) => {
         e.preventDefault();
         const delta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -845,7 +1045,6 @@
         updateZoomDisplay();
       });
       
-      // Steuerungs-Buttons
       const controls = document.createElement('div');
       controls.className = 'zoom-controls';
       controls.innerHTML = `
@@ -857,7 +1056,6 @@
       
       container.appendChild(controls);
       
-      // Zoom-Buttons
       document.getElementById('zoomIn').addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -900,50 +1098,29 @@
       
       svg.style.cursor = "crosshair";
       
-      // Alte Event-Listener entfernen
       if (svg._clickHandler) {
         svg.removeEventListener('click', svg._clickHandler);
       }
       
       const handleClick = (e) => {
-        // Mausposition im Fenster
-        const clientX = e.clientX;
-        const clientY = e.clientY;
+        // Use SVG's built-in coordinate transformation for accuracy
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
         
-        // SVG-Element und seine Position
-        const svgRect = svg.getBoundingClientRect();
+        // svgP.x is the SVG x coordinate, svgP.y is SVG y (which is negated in our system)
+        const x = svgP.x;
+        const y = -svgP.y;  // invert because we draw with cy = -y
         
-        // Zoom-Level
-        const zoom = zoomLevel;
-        
-        // Relative Position im SVG (0-1) mit Zoom-Korrektur
-        const relX = (clientX - svgRect.left) / (svgRect.width / zoom);
-        const relY = (clientY - svgRect.top) / (svgRect.height / zoom);
-        
-        // ViewBox des SVGs
-        const viewBox = svg.viewBox.baseVal;
-        const viewBoxWidth = viewBox.width;
-        const viewBoxHeight = viewBox.height;
-        
-        // Absolute Koordinaten im ViewBox-System
-        // WICHTIG: Die Y-Achse ist im SVG gespiegelt (negativ)
-        const x = viewBox.x + relX * viewBoxWidth;
-        const y = -(viewBox.y + relY * viewBoxHeight - viewBoxHeight);
-        
-        // Auf nächste ganze Zahl runden (Gitterpunkte)
         const gridX = Math.round(x);
         const gridY = Math.round(y);
         
-        console.log('Klick:', {x, y, gridX, gridY, target: ex.target});
-        
-        // Prüfen ob innerhalb des sichtbaren Bereichs
-        const range = getRange() + 2;
+        const range = 8; // matches SVG viewBox xMin/xMax
         if (gridX >= -range && gridX <= range && gridY >= -range && gridY <= range) {
-          // Alten Punkt entfernen
           const oldPoint = svg.querySelector('#user-point');
           if (oldPoint) oldPoint.remove();
           
-          // Neuen Punkt zeichnen
           const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
           point.id = "user-point";
           point.setAttribute("cx", gridX);
@@ -954,7 +1131,6 @@
           point.setAttribute("stroke-width", "0.05");
           svg.appendChild(point);
           
-          // Prüfen ob richtig
           if (gridX === ex.target.x && gridY === ex.target.y) {
             feedback.textContent = '✅ Richtig! Punkt getroffen.';
             feedback.className = 'feedback success';
@@ -1010,7 +1186,6 @@
 
       if (section === 'coords') {
         graphTitle = '📍 Punkt finden';
-        // hideTarget = true für Aufgabe 1 - der rote Punkt wird NICHT angezeigt
         graphSVG = renderSVG(0, 0, [], ex.target, false, null, null, true);
         funcChips = `<div class="chip"><i>Gesucht:</i> (${ex.target.x} | ${ex.target.y})</div>`;
       } else if (section === 'table') {
@@ -1165,30 +1340,21 @@
           </div>
         </div>
         <div class="exercise-area">
-          <div class="qr-container">
-            <h3><span>📱</span> QR-Code</h3>
-            <div class="qr-code">
-              ${generateQRCode()}
-            </div>
-          </div>
           ${exerciseHTML}
         </div>
       `;
 
-      // Mobile Navigation aktiv setzen
       document.querySelectorAll('.nav-item:not(#pdfExportBtn)').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.section === currentSection) btn.classList.add('active');
       });
 
-      // SVG zoomfähig machen
       const container = document.getElementById('svgContainer');
       const svg = container.querySelector('svg');
       if (svg) {
         setupZoomableSVG(container, svg);
       }
 
-      // Event-Listener für "Neu" Buttons
       document.querySelectorAll('#newExampleBtn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1198,7 +1364,6 @@
         });
       });
 
-      // Navigation-Buttons
       document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1209,7 +1374,6 @@
         });
       });
 
-      // Abschnitts-spezifische Prüfungen
       if (section === 'coords') {
         const svg = document.querySelector('#svgContainer svg');
         const feedback = document.getElementById('coordsFeedback');
@@ -1385,10 +1549,77 @@
     // INITIALISIERUNG
     // =====================================================
     document.addEventListener('DOMContentLoaded', () => {
-      // Level-Auswahl erstellen
       createLevelSelect();
 
-      // PDF-Button Event-Listener
+      // Header-Höhe dynamisch als CSS-Variable setzen
+      function updateHeaderHeight() {
+        const header = document.getElementById('appHeader');
+        if (header) {
+          document.getElementById('mainContent').style.marginTop = header.offsetHeight + 'px';
+        }
+      }
+      updateHeaderHeight();
+      window.addEventListener('resize', updateHeaderHeight);
+
+      // QR-Code Button
+      const qrBtn = document.getElementById('qrBtn');
+      const qrModal = document.getElementById('qrModal');
+      const qrClose = document.getElementById('qrClose');
+      const qrCanvas = document.getElementById('qrCanvas');
+      const qrUrlEl = document.getElementById('qrUrl');
+
+      if (qrBtn) {
+        qrBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = window.location.href;
+          qrUrlEl.textContent = url;
+          // Canvas leeren
+          const ctx = qrCanvas.getContext('2d');
+          qrCanvas.width = 180;
+          qrCanvas.height = 180;
+          ctx.clearRect(0, 0, 180, 180);
+          // QR-Code zeichnen
+          try {
+            // qrcodejs nutzt DOM, wir brauchen einen Hilfs-div
+            const tmpDiv = document.createElement('div');
+            tmpDiv.style.display = 'none';
+            document.body.appendChild(tmpDiv);
+            new QRCode(tmpDiv, {
+              text: url,
+              width: 180,
+              height: 180,
+              colorDark: '#000000',
+              colorLight: '#ffffff',
+            });
+            // Nach kurzer Verzögerung das erzeugte Canvas/Img kopieren
+            setTimeout(() => {
+              const img = tmpDiv.querySelector('img') || tmpDiv.querySelector('canvas');
+              if (img) {
+                const tempImg = new Image();
+                tempImg.onload = () => ctx.drawImage(tempImg, 0, 0, 180, 180);
+                tempImg.src = img.tagName === 'CANVAS' ? img.toDataURL() : img.src;
+              }
+              document.body.removeChild(tmpDiv);
+            }, 100);
+          } catch(err) {
+            ctx.fillStyle = '#333';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('QR-Code nicht', 10, 80);
+            ctx.fillText('verfügbar', 35, 100);
+          }
+          qrModal.classList.add('open');
+        });
+      }
+
+      if (qrClose) {
+        qrClose.addEventListener('click', () => qrModal.classList.remove('open'));
+      }
+      if (qrModal) {
+        qrModal.addEventListener('click', (e) => {
+          if (e.target === qrModal) qrModal.classList.remove('open');
+        });
+      }
+
       const pdfBtn = document.getElementById('pdfExportBtn');
       if (pdfBtn) {
         pdfBtn.addEventListener('click', (e) => {
@@ -1397,10 +1628,7 @@
         });
       }
 
-      // Initiales Beispiel generieren
       currentExample = generateExample(currentSection);
-      
-      // Ersten Render durchführen
       render();
     });
   })();

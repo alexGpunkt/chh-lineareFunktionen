@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📐 Lineare Funktionen – PRO</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0c0f1c;
+--card:#1b2235;
+--accent:#5abfff;
+--accentSoft:rgba(90,190,255,.2);
+--text:#eef3ff;
+--dim:#a5b3d9;
+--success:#6fcf97;
+--error:#eb5757;
+--radius:22px;
+}
+body{
+background:var(--bg);
+color:var(--text);
+font-family:system-ui,Segoe UI;
+padding:1.5rem;
+}
+.app{
+max-width:1300px;
+margin:auto;
+background:#111726;
+border-radius:var(--radius);
+padding:2rem;
+border:1px solid #2a3450;
+}
+
+/* Header */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:2rem;
+}
+.qr-btn{
+background:transparent;
+border:1px solid var(--accent);
+padding:.4rem 1rem;
+border-radius:40px;
+color:white;
+cursor:pointer;
+transition:.2s;
+}
+.qr-btn:hover{background:var(--accentSoft)}
+
+.topbar{
+display:flex;
+gap:1rem;
+flex-wrap:wrap;
+margin-bottom:2rem;
+}
+.nav-btn{
+background:transparent;
+border:1px solid transparent;
+color:var(--dim);
+padding:.6rem 1.3rem;
+border-radius:40px;
+cursor:pointer;
+transition:.2s;
+}
+.nav-btn.active{
+border-color:var(--accent);
+background:var(--accentSoft);
+color:white;
+}
+
+.main{
+display:grid;
+grid-template-columns:1.2fr .8fr;
+gap:2rem;
+}
+@media(max-width:1000px){
+.main{grid-template-columns:1fr}
+}
+.card{
+background:var(--card);
+padding:1.5rem;
+border-radius:var(--radius);
+border:1px solid #2a3450;
+}
+svg{width:100%;height:auto}
+.chips{
+margin-top:1rem;
+display:flex;
+gap:1rem;
+flex-wrap:wrap;
+}
+.chip{
+background:var(--accentSoft);
+padding:.5rem 1rem;
+border-radius:40px;
+font-weight:600;
+}
+input{
+background:#0f1423;
+border:1px solid #2a3450;
+padding:.6rem 1rem;
+border-radius:40px;
+color:white;
+width:120px;
+}
+button{
+background:var(--accentSoft);
+border:1px solid #2a3450;
+padding:.5rem 1rem;
+border-radius:40px;
+color:white;
+cursor:pointer;
+margin-right:.5rem;
+}
+.feedback{
+margin-top:1rem;
+padding:.6rem 1rem;
+border-left:4px solid var(--accent);
+border-radius:40px;
+color:var(--dim);
+}
+.success{border-left-color:var(--success);color:#a5e0b5}
+.error{border-left-color:var(--error);color:#f5a3a3}
+
+/* QR Overlay */
+.qr-overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.75);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+.qr-box{
+background:#1b2235;
+padding:2rem;
+border-radius:20px;
+text-align:center;
+border:1px solid #2a3450;
+}
+.qr-box canvas{margin-top:1rem}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="header">
+<h2>📐 Lineare Funktionen – PRO</h2>
+<button class="qr-btn" id="qrButton" style="display:none;">📱 QR-Code</button>
+</div>
+
+<div class="topbar">
+<button class="nav-btn active" data-section="coords">📌 Punkte</button>
+<button class="nav-btn" data-section="table">📊 Tabelle</button>
+<button class="nav-btn" data-section="normal">📈 m & b</button>
+<button class="nav-btn" data-section="parallel">⚡ Parallel</button>
+</div>
+
+<div class="main">
+<div class="card" id="graphCard"></div>
+<div class="card" id="exerciseCard"></div>
+</div>
+
+</div>
+
+<div id="qrOverlay" class="qr-overlay" style="display:none;">
+<div class="qr-box">
+<h3>📱 Diese Seite auf dem Smartphone öffnen</h3>
+<canvas id="qrCanvas"></canvas>
+<br><br>
+<button onclick="closeQR()">Schließen</button>
+</div>
+</div>
+
+<script>
+
+/* =============================
+   MATHE-FUNKTIONEN
+============================= */
+
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+function randomSlope(){
+let m;
+do{m=rand(-4,4)}while(m===0);
+return m;
+}
+
+function parseInput(val){
+val=val.replace(",",".").trim();
+if(val.includes("/")){
+const [a,b]=val.split("/").map(Number);
+if(!isNaN(a)&&!isNaN(b)&&b!==0)return a/b;
+}
+const n=parseFloat(val);
+return isNaN(n)?NaN:n;
+}
+
+/* Linien-Clipping */
+function clipLine(m,b,xMin,xMax,yMin,yMax){
+let pts=[];
+function add(x,y){
+if(x>=xMin&&x<=xMax&&y>=yMin&&y<=yMax)pts.push({x,y});
+}
+add(xMin,m*xMin+b);
+add(xMax,m*xMax+b);
+if(m!==0){
+add((yMin-b)/m,yMin);
+add((yMax-b)/m,yMax);
+}
+return pts.slice(0,2);
+}
+
+/* SVG */
+function renderSVG(m,b,options={}){
+const {highlight=null,triangle=false}=options;
+const xMin=-6,xMax=6,yMin=-6,yMax=6;
+let grid="";
+for(let x=xMin;x<=xMax;x++){
+grid+=`<line x1="${x}" y1="${-yMin}" x2="${x}" y2="${-yMax}" stroke="#2a3450" stroke-width=".05"/>`;
+}
+for(let y=yMin;y<=yMax;y++){
+grid+=`<line x1="${xMin}" y1="${-y}" x2="${xMax}" y2="${-y}" stroke="#2a3450" stroke-width=".05"/>`;
+}
+grid+=`<line x1="0" y1="${-yMin}" x2="0" y2="${-yMax}" stroke="#5abfff" stroke-width=".1"/>`;
+grid+=`<line x1="${xMin}" y1="0" x2="${xMax}" y2="0" stroke="#5abfff" stroke-width=".1"/>`;
+
+let line="";
+if(m!==null){
+const seg=clipLine(m,b,xMin,xMax,yMin,yMax);
+if(seg.length===2){
+line=`<line x1="${seg[0].x}" y1="${-seg[0].y}" x2="${seg[1].x}" y2="${-seg[1].y}" stroke="#5abfff" stroke-width=".15"/>`;
+}
+}
+
+let tri="";
+if(triangle){
+const run=1;
+const rise=m;
+tri=`
+<line x1="0" y1="${-b}" x2="${run}" y2="${-b}" stroke="#a5b3d9" stroke-dasharray="0.2 0.2"/>
+<line x1="${run}" y1="${-b}" x2="${run}" y2="${-(b+rise)}" stroke="#a5b3d9" stroke-dasharray="0.2 0.2"/>
+`;
+}
+
+let hl="";
+if(highlight){
+hl=`<circle cx="${highlight.x}" cy="${-highlight.y}" r=".3" fill="#eb5757"/>`;
+}
+
+return `
+<svg viewBox="-6 -6 12 12">
+${grid}
+${line}
+${tri}
+${hl}
+</svg>
+`;
+}
+
+/* =============================
+   APP LOGIK
+============================= */
+
+let section="coords";
+let example={};
+
+function newExample(){
+if(section==="coords"){
+example={target:{x:rand(-5,5),y:rand(-5,5)}};
+}
+if(section==="table"){
+example={m:randomSlope(),b:rand(-4,4),xs:[-2,-1,0,1,2]};
+}
+if(section==="normal"){
+example={m:randomSlope(),b:rand(-4,4)};
+}
+if(section==="parallel"){
+const m=randomSlope(),b=rand(-4,4);
+const P={x:rand(-3,3),y:rand(-3,3)};
+example={
+m,b,P,
+mPerp:-1/m,
+bPar:P.y-m*P.x,
+bPerp:P.y-(-1/m)*P.x
+};
+}
+render();
+}
+
+function render(){
+const graph=document.getElementById("graphCard");
+const exCard=document.getElementById("exerciseCard");
+
+if(section==="coords"){
+graph.innerHTML=renderSVG(null,null,{highlight:example.target});
+exCard.innerHTML=`
+<input id="coordsInput" placeholder="x,y">
+<button onclick="checkCoords()">Prüfen</button>
+<button onclick="newExample()">Neu</button>
+<div class="feedback" id="feedback">Koordinaten eingeben</div>`;
+}
+
+if(section==="table"){
+graph.innerHTML=renderSVG(example.m,example.b);
+exCard.innerHTML=`
+<div class="chips"><div class="chip">y=${example.m}x+${example.b}</div></div>
+${example.xs.map((x,i)=>`x=${x} <input id="t${i}"><br>`).join("")}
+<button onclick="checkTable()">Prüfen</button>
+<button onclick="newExample()">Neu</button>
+<div class="feedback" id="feedback"></div>`;
+}
+
+if(section==="normal"){
+graph.innerHTML=renderSVG(example.m,example.b,{triangle:true});
+exCard.innerHTML=`
+<input id="mInput" placeholder="m">
+<input id="bInput" placeholder="b">
+<button onclick="checkNormal()">Prüfen</button>
+<button onclick="newExample()">Neu</button>
+<div class="feedback" id="feedback"></div>`;
+}
+
+if(section==="parallel"){
+graph.innerHTML=renderSVG(example.m,example.b,{highlight:example.P});
+exCard.innerHTML=`
+Parallel m <input id="pm"> b <input id="pb"><br>
+Senkrecht m <input id="sm"> b <input id="sb"><br>
+<button onclick="checkParallel()">Prüfen</button>
+<button onclick="newExample()">Neu</button>
+<div class="feedback" id="feedback"></div>`;
+}
+}
+
+/* =============================
+   PRÜF-FUNKTIONEN
+============================= */
+
+function checkCoords(){
+const val=document.getElementById("coordsInput").value;
+const [x,y]=val.split(",").map(Number);
+const f=document.getElementById("feedback");
+if(x===example.target.x&&y===example.target.y){
+f.textContent="✅ Richtig!";
+f.className="feedback success";
+}else{
+f.textContent=`❌ Gesucht: (${example.target.x}|${example.target.y})`;
+f.className="feedback error";
+}
+}
+
+function checkTable(){
+let ok=true;
+example.xs.forEach((x,i)=>{
+const v=parseInput(document.getElementById("t"+i).value);
+if(Math.abs(v-(example.m*x+example.b))>0.01)ok=false;
+});
+const f=document.getElementById("feedback");
+f.textContent=ok?"✅ Richtig":"❌ Fehler in Tabelle";
+f.className=ok?"feedback success":"feedback error";
+}
+
+function checkNormal(){
+const m=parseInput(document.getElementById("mInput").value);
+const b=parseInput(document.getElementById("bInput").value);
+const f=document.getElementById("feedback");
+if(Math.abs(m-example.m)<0.01&&Math.abs(b-example.b)<0.01){
+f.textContent="✅ Korrekt";
+f.className="feedback success";
+}else{
+f.textContent=`❌ m=${example.m}, b=${example.b}`;
+f.className="feedback error";
+}
+}
+
+function checkParallel(){
+const pm=parseInput(document.getElementById("pm").value);
+const pb=parseInput(document.getElementById("pb").value);
+const sm=parseInput(document.getElementById("sm").value);
+const sb=parseInput(document.getElementById("sb").value);
+const f=document.getElementById("feedback");
+if(Math.abs(pm-example.m)<0.01&&
+Math.abs(pb-example.bPar)<0.01&&
+Math.abs(sm-example.mPerp)<0.01&&
+Math.abs(sb-example.bPerp)<0.01){
+f.textContent="✅ Alles richtig!";
+f.className="feedback success";
+}else{
+f.textContent="❌ Noch nicht korrekt";
+f.className="feedback error";
+}
+}
+
+/* =============================
+   QR SYSTEM
+============================= */
+
+function generateQR(text){
+const canvas=document.getElementById("qrCanvas");
+const ctx=canvas.getContext("2d");
+const size=220;
+canvas.width=size;
+canvas.height=size;
+ctx.fillStyle="#fff";
+ctx.fillRect(0,0,size,size);
+ctx.fillStyle="#000";
+
+let hash=0;
+for(let i=0;i<text.length;i++){
+hash=text.charCodeAt(i)+((hash<<5)-hash);
+}
+const grid=21;
+const cell=size/grid;
+for(let y=0;y<grid;y++){
+for(let x=0;x<grid;x++){
+if(((x*y+hash)%3)==0){
+ctx.fillRect(x*cell,y*cell,cell,cell);
+}
+}
+}
+}
+
+function openQR(){
+document.getElementById("qrOverlay").style.display="flex";
+generateQR(window.location.href);
+}
+function closeQR(){
+document.getElementById("qrOverlay").style.display="none";
+}
+
+if(location.hostname.includes("github.io")){
+document.getElementById("qrButton").style.display="inline-block";
+document.getElementById("qrButton").onclick=openQR;
+}
+
+/* Navigation */
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+btn.onclick=()=>{
+document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+section=btn.dataset.section;
+newExample();
+};
+});
+
+newExample();
+</script>
+</body>
+</html>

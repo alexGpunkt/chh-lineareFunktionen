@@ -1195,7 +1195,7 @@
       } else if (section === 'normalform') {
         graphTitle = '📈 Steigung & Achsenabschnitt';
         graphSVG = renderSVG(ex.m, ex.b, [], null, true);
-        funcChips = `<div class="chip"><i>m =</i> ${asFraction(ex.m)}</div><div class="chip"><i>b =</i> ${ex.b}</div>`;
+        funcChips = '';
       } else if (section === 'parallel') {
         graphTitle = '⚡ Parallele & Senkrechte';
         graphSVG = renderSVG(ex.m, ex.b, [], null, false, ex.P);
